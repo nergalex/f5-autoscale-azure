@@ -32,6 +32,7 @@ There is no unique solution, please follow the methodology presented in the Secu
 or other `languages  <https://www.f5.com/c/emea-2020/emea-webinar-library>`_,
 Feel free to reach `F5 people <https://www.linkedin.com/company/f5/people/>`_ for a dedicated workshop.
 
+.. figure:: _figures/Architecture_INBOUND.png
 
 
 Demo
