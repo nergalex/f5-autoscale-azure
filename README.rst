@@ -52,11 +52,7 @@ Demo
 
 .. raw:: html
 
-    <video width="320" height="240" controls>
-      <source src="/assets_tutorials/media/Shaun-the-Sheep-The-Movie-Official-Trailer.mp4" type="video/mp4">
-      <source src="/assets_tutorials/media/Shaun-the-Sheep-The-Movie-Official-Trailer.ogg" type="video/ogg">
-    Votre navigateur ne supporte pas la balise vidéo.
-    </video>
+    <a href="http://www.youtube.com/watch?v=x4CnlKm_Ik8"><img src="http://img.youtube.com/vi/x4CnlKm_Ik8/0.jpg" width="82" height="86" title="White flower" alt="Flower"></a>
 
 .. raw:: html
 
