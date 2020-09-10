@@ -50,25 +50,13 @@ Demo
 ###############
 - Automate an Application deployment
 .. raw:: html
-    <a href="http://www.youtube.com/watch?v=x4CnlKm_Ik8"><img src="http://img.youtube.com/vi/x4CnlKm_Ik8/0.jpg" width="200" height="200" title="Automate an Application deployment" alt="Automate an Application deployment"></a>
 
+    <a href="http://www.youtube.com/watch?v=p1rfhssaE_U"><img src="http://img.youtube.com/vi/p1rfhssaE_U/0.jpg" width="200" height="200" title="Automate an Application deployment" alt="Automate an Application deployment"></a>
+
+- Scale Out VMSS NGINX+ managed by NGINX Controller
 .. raw:: html
 
-    <iframe src="//www.youtube.com/embed/x4CnlKm_Ik8" frameborder="0" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
-
-.. raw:: html
-
-    <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; height: auto;">
-        <iframe src="//www.youtube.com/embed/x4CnlKm_Ik8" frameborder="0" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
-    </div>
-
-.. raw:: html
-
-    <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; height: auto;">
-        <iframe src="http://www.youtube.com/watch?v=x4CnlKm_Ik8" frameborder="0" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
-    </div>
-
-[![demo](http://img.youtube.com/vi/x4CnlKm_Ik8/0.jpg)](http://www.youtube.com/watch?v=x4CnlKm_Ik8)
+    <a href="http://www.youtube.com/watch?v=x4CnlKm_Ik8"><img src="http://img.youtube.com/vi/x4CnlKm_Ik8/0.jpg" width="200" height="200" title="Scale Out VMSS NGINX+ managed by NGINX Controller" alt="Scale Out VMSS NGINX+ managed by NGINX Controller"></a>
 
 
 
