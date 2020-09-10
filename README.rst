@@ -53,28 +53,20 @@ Demo
 
     <a href="http://www.youtube.com/watch?v=p1rfhssaE_U"><img src="http://img.youtube.com/vi/p1rfhssaE_U/0.jpg" width="200" height="200" title="Automate an Application deployment" alt="Automate an Application deployment"></a>
 
-
-
 - Scale Out VMSS NGINX+ managed by NGINX Controller
 .. raw:: html
 
     <a href="http://www.youtube.com/watch?v=x4CnlKm_Ik8"><img src="http://img.youtube.com/vi/x4CnlKm_Ik8/0.jpg" width="200" height="200" title="Scale Out VMSS NGINX+ managed by NGINX Controller" alt="Scale Out VMSS NGINX+ managed by NGINX Controller"></a>
-
-
 
 - Scale In VMSS NGINX+ managed by NGINX Controller
 .. raw:: html
 
     <a href="http://www.youtube.com/watch?v=8tG1QF0Rurw"><img src="http://img.youtube.com/vi/8tG1QF0Rurw/0.jpg" width="200" height="200" title="Scale In VMSS NGINX+ managed by NGINX Controller" alt="Scale In VMSS NGINX+ managed by NGINX Controller"></a>
 
-
-
 - Scale Out VMSS BIG-IP managed by BIG-IQ
 .. raw:: html
 
-    <a href="http://www.youtube.com/watch?v=zcprcsc5Mow"><img src="http://img.youtube.com/vi/zcprcsc5Mow/0.jpg" width="200" height="200" title="Scale Out VMSS BIG-IP managed by BIG-IQ" alt="Scale Out VMSS BIG-IP managed by BIG-IQ"></a>
-
-
+    <a href="http://www.youtube.com/watch?v=EvSrmwhDP2o"><img src="http://img.youtube.com/vi/EvSrmwhDP2o/0.jpg" width="200" height="200" title="Scale Out VMSS BIG-IP managed by BIG-IQ" alt="Scale Out VMSS BIG-IP managed by BIG-IQ"></a>
 
 - Scale Out VMSS BIG-IP managed by BIG-IQ
 .. raw:: html
