@@ -50,7 +50,11 @@ Demo
 ###############
 - Deploy an Application
 
-.. youtube:: x4CnlKm_Ik8
+.. raw:: html
+
+    <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; height: auto;">
+        <iframe src="https://www.youtube.com/embed/x4CnlKm_Ik8" frameborder="0" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
+    </div>
 
 [![demo](http://img.youtube.com/vi/x4CnlKm_Ik8/0.jpg)](http://www.youtube.com/watch?v=x4CnlKm_Ik8)
 
