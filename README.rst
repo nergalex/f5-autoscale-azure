@@ -25,7 +25,14 @@ Benefit
 
 Architecture
 *********************
-The Edge Security design described bellow is an example. The methodology is described in this [webinar](https://eur01.safelinks.protection.outlook.com/?url=https%3A%2F%2Fevent.on24.com%2Finterface%2Fregistration%2Fautoreg%2Findex.html%3Feventid%3D2209631%26sessionid%3D1%26key%3D3D42A4051EE862113709FEF2AFA82733%26firstname%3Darnaud%26lastname%3Dlemaire%26email%3Da.lemaire%40f5.com%26job_title%3DMngr%252C%2BSystems%2Bengineering%26company%3DF5%2BNetworks%2BInc.%26country%3DNetherlands%26zip%3D3528%2BBJ%26work_phone%3D202014940&data=02%7C01%7Cyoucef.hamou%40external.total.com%7C23f9a37a57b14e0aa6cf08d7d63ce224%7C329e91b0e21f48fba071456717ecc28e%7C1%7C0%7C637213429317758799&sdata=Q7nFwvlTtkC1C43OoKcKuZy0x2Od8e22IRjsRNy%2BWfE%3D&reserved=0)
+The Edge Security architecture described in this article is a solution based on specific customer needs, business expectation and security requirements.
+There is no unique solution, please follow the methodology presented in the Secure Cloud Architecture webinar, available in
+`English <https://gateway.on24.com/wcc/eh/1140560/lp/2200026/f5-emea-webinar-march-2020-english>`_,
+`French <https://gateway.on24.com/wcc/eh/1140560/lp/2209631/f5-emea-webinar-march-2020-french>`_
+or other `languages  <https://www.f5.com/c/emea-2020/emea-webinar-library>`_,
+Feel free to reach `F5 people <https://www.linkedin.com/company/f5/people/>`_ for a dedicated workshop.
+
+
 
 Demo
 ###############
