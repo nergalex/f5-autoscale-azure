@@ -34,10 +34,23 @@ Feel free to reach `F5 people <https://www.linkedin.com/company/f5/people/>`_ fo
 
 .. figure:: _figure/Architecture_INBOUND.png
 
+Design Consideration
+*********************
+Ths article is to propose a solution based on:
+- native cloud provider autoscaling feature
+- F5 Controller products for Out Of Band management and Analytics
+- customer eco-system products
+
+For autoscale need in a another customer context,
+`ARM templates <https://github.com/F5Networks/f5-azure-arm-templates>`_ - supported by F5 - could be sufficient.
+
+Automation tool used here is Ansible. F5 products can also be deployed with Terraform, please refer to those good `articles written by Jeff Giroux <https://github.com/JeffGiroux/f5_terraform>`_
 
 Demo
 ###############
 - Deploy an Application
+
+.. youtube:: x4CnlKm_Ik8
 
 [![demo](http://img.youtube.com/vi/x4CnlKm_Ik8/0.jpg)](http://www.youtube.com/watch?v=x4CnlKm_Ik8)
 
