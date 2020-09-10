@@ -52,7 +52,9 @@ Demo
 
 .. raw:: html
 
-    <p><strong>RAW HTML!</strong></p><style> p {color:blue;} </style>
+    <iframe width="420" height="315"
+        src="https://www.youtube.com/embed/x4CnlKm_Ik8">
+    </iframe>
 
 .. raw:: html
 
