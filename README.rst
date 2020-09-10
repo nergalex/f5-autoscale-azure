@@ -49,7 +49,6 @@ Automation tool used here is Ansible. F5 products can also be deployed with Terr
 Demo
 ###############
 - Automate an Application deployment
-
 .. raw:: html
 
     <a href="http://www.youtube.com/watch?v=x4CnlKm_Ik8"><img src="http://img.youtube.com/vi/x4CnlKm_Ik8/0.jpg" width="200" height="200" title="Automate an Application deployment" alt="Automate an Application deployment"></a>
