@@ -52,7 +52,7 @@ Demo
 
 .. raw:: html
 
-    <embed src="https://www.youtube.com/embed/x4CnlKm_Ik8" allowfullscreen="true" width="425" height="344">
+    <object width="425" height="344" data="https://www.youtube.com/embed/x4CnlKm_Ik8"></object>
 
 .. raw:: html
 
