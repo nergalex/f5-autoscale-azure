@@ -56,7 +56,7 @@ Ths article is to propose a solution based on:
 For autoscale need in a another customer context,
 `ARM templates <https://github.com/F5Networks/f5-azure-arm-templates>`_ - supported by F5 - could be sufficient.
 
-Automation tool used here is `Ansible <https://github.com/F5Networks/f5-ansible>`_. F5 products can also be deployed with `Terraform<https://github.com/F5Networks/terraform-provider-bigip-version0.12>`_, please refer to those good `articles written by Jeff Giroux <https://github.com/JeffGiroux/f5_terraform>`_
+Automation tool used here is `Ansible <https://github.com/F5Networks/f5-ansible>`_. F5 products can also be deployed with `Terraform <https://github.com/F5Networks/terraform-provider-bigip-version0.12>`_, refer to those good `articles written by Jeff Giroux <https://github.com/JeffGiroux/f5_terraform>`_
 
 Demo
 ###############
