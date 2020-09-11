@@ -1,5 +1,5 @@
-=====  =====  ======
-  A      B    A or B
+=====  =====        ======
+  A      B          A or B
 =====  =====  ======
 False  False  False
 True   False  True
