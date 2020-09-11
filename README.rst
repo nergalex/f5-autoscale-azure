@@ -223,39 +223,41 @@ Job template                                            objective               
 ``poc-nginx_onboarding_nginx_sync_step3_master``        Copy from Master VM to Slave NGINX                  ``playbooks/poc-nginx_master.yaml``             ``onboarding_nginx_sync_step3_master``          ``localhost``                                   ``localhost``                                   ``cred_NGINX``
 =====================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
 
+==============================================  =============================================   =============================================
+Extra variable                                  Description                                     Example                                      
+==============================================  =============================================   =============================================
+``extra_app_protect_monitor_ip``                Kibana for NGINX App Protect                    ``10.0.0.20``
+``extra_app_protect_repo``                      repo that stores NAP install scripts            ``http://10.0.0.19``
+``extra_availability_zone``                     availability zones                              ``[1, 2]``
+``extra_dataplane_subnet_address_mask``         eth1 subnet                                     ``24``
+``extra_elb_management_name``                   ELB for outbound connection during install      ``outbound-management-vmss-nginx-external``
+``extra_gw_dataplane``                          eth1 GW                                         ``10.100.1.1``
+``extra_gw_management``                         eth0 GW                                         ``10.100.0.1``
+``extra_key_data``                              admin CRT                                       ``-----BEGIN  CERTIFICATE-----XXXXXXX-----END CERTIFICATE-----``
+``extra_lb_dataplane_name``                     LB name for dataplane traffic                   ``external``
+``extra_lb_dataplane_type``                     LB type for dataplane traffic                   ``elb``
+``extra_location``                              region                                          ``eastus2``
+``extra_offer``                                 OS                                              ``CentOS``
+``extra_publisher``                             OS distrib                                      ``OpenLogic``
+``extra_sku``                                   OS distrib version                              ``7.4``
+``extra_vm_size``                               VM type                                         ``Standard_DS3_v2``
+``extra_vmss_capacity``                         initial vmss_capacity                           `2``
+``extra_vmss_name``                             logical vmss_name                               ``nginxwaf``
+``nginx_rpm_version``                           Nginx+ version to install                       ``20``
+``extra_platform_name``                         logical platform_name                           ``myPlatform``
+``extra_platform_tags``                         logical platform_tags                           ``environment=DMO platform=Inbound project=CloudBuilderf5``
+``extra_project_name``                          logical project_name                            ``CloudBuilderf5``
+``extra_route_prefix_on_premise``               cross management subnet                         ``10.0.0.0/24``
+``extra_subnet_dataplane_name``                 logical name for eth1 subnet                    ``nginx``
+``extra_template_nginx_conf``                   jinja2 template for nginx.conf                  ``nginx_app_protect.conf``
+``extra_template_route``                        jinja2 template for persistent route            ``system_route_persistent-default_via_dataplane.conf``
+``extra_app_protect_monitor_ip``                IP address of Kibana server                     ``10.0.0.20``
+``extra_nginx_key``                             NGINX+ private key (PEM format)                 ``-----BEGIN  ... KEY-----``
+``extra_nginx_crt``                             NGINX+ certificate (PEM format)                 ``-----BEGIN  ... CERTIFICATE-----``
+``extra_webhook_email``                         e-mail address                                  ``admin@acme.com``
+``extra_webhook_vm_name``                       VM name                                         ``autoscale-f5``
+==============================================  =============================================   =============================================
 
-| Extra variable| Description | Example of value      |
-| ------------- | ------------- | ------------- |
-| ``extra_app_protect_monitor_ip``          | Kibana for NGINX App Protect | ``10.0.0.20`` |
-| ``extra_app_protect_repo``                | repo that stores NGINX App Protect install scripts | ``http://10.0.0.19`` |
-| ``extra_availability_zone``               | availability zones | ``[1, 2]`` |
-| ``extra_dataplane_subnet_address_mask``   | eth1 subnet | ``24`` |
-| ``extra_elb_management_name``             | External LB for outbound connection during install| ``outbound-management-vmss-nginx-external`` |
-| ``extra_gw_dataplane``                    | eth1 GW | ``10.100.1.1`` |
-| ``extra_gw_management``                   | eth0 GW | ``10.100.0.1`` |
-| ``extra_key_data``                        | admin CRT | ``-----BEGIN  CERTIFICATE-----XXXXXXX-----END CERTIFICATE-----`` |
-| ``extra_lb_dataplane_name``               | LB name for dataplane traffic | ``external`` |
-| ``extra_lb_dataplane_type``               | LB type for dataplane traffic | ``elb`` |
-| ``extra_location``                        | region | ``eastus2`` |
-| ``extra_offer``                           | OS | ``CentOS`` |
-| ``extra_publisher``                       | OS distrib | ``OpenLogic`` |
-| ``extra_sku``                             | OS distrib version | ``7.4`` |
-| ``extra_vm_size``                         | VM type | ``Standard_DS3_v2`` |
-| ``extra_vmss_capacity``                   | initial vmss_capacity | ``2`` |
-| ``extra_vmss_name``                       | logical vmss_name | ``nginxwaf`` |
-| ``nginx_rpm_version``                     | Nginx+ version to install | ``20`` |
-| ``extra_platform_name``                   | logical platform_name | ``myPlatform`` |
-| ``extra_platform_tags``                   | logical platform_tags | ``environment=DMO platform=Inbound project=CloudBuilderf5`` |
-| ``extra_project_name``                    | logical project_name | ``CloudBuilderf5`` |
-| ``extra_route_prefix_on_premise``         | cross management subnet | ``10.0.0.0/24`` |
-| ``extra_subnet_dataplane_name``           | logical name for eth1 subnet | ``nginx`` |
-| ``extra_template_nginx_conf``             | jinja2 template for nginx.conf| ``nginx_app_protect.conf`` |
-| ``extra_template_route``                  | jinja2 template for persistent route | ``system_route_persistent-default_via_dataplane.conf`` |
-| ``extra_app_protect_monitor_ip``          | IP address of Kibana server | ``10.0.0.20`` |
-| ``extra_nginx_key``                       | NGINX+ private key | ``-----BEGIN  PRIVATE KEY-----XXXXXXX-----END PRIVATE KEY-----`` |
-| ``extra_nginx_crt``                       | NGINX+ certificate | ``-----BEGIN  CERTIFICATE-----XXXXXXX-----END CERTIFICATE-----`` |
-| ``extra_webhook_email``                   | NGINX+ certificate | ``admin@acme.com`` |
-| ``extra_webhook_vm_name``                 | NGINX+ certificate | ``autoscale-f5`` |
 
 ## BIG-IP Advanced WAF
 Create and launch a workflow template ``wf-create_vmss_device-group_awaf`` that include those Job templates in this order:
