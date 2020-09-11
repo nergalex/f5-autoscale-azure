@@ -1,9 +1,9 @@
 =====  =====        ======
   A      B          A or B
-=====  =====  ======
-False  False  False
-True   False  True
-=====  =====  ======
+=====  =====        ======
+False  False        False
+True   False        True
+=====  =====        ======
 
 
 Autoscale F5 products in Microsoft Azure
