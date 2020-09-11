@@ -474,9 +474,10 @@ Extra variable                                  Description                     
 
 Autoscale
 =====================
-BIG-IP - sync-failover
+BIG-IP cluster in sync-failover
 #####################
-Limitation: :kbd:`8 cluster members = 8 BIG-IP instances in VMSS`
+Limitation: :kbd:`8 cluster members = **8 BIG-IP VM instances** in VMSS`
+Benefit: **time to be operational** = Application Services deployed
 
 Scale Out
 ---------------------
@@ -546,7 +547,12 @@ Extra variable                                  Description                     
 ``extra_vmss_name``                             vmss_name. Set by webhook                       ``awaf``
 ==============================================  =============================================   ================================================================================================================================================================================================================
 
+BIG-IP + Consul
+#####################
 
+- **Benefit**: no limitation on BIG-IP instances in a VMSS, except from Cloud Provider limitation
+- **Pain point**: time to be operational = Application Services deployed
+:kbd:`ToDo`
 NGINX+ without Controller
 #####################
 :kbd:`ToDo`
