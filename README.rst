@@ -223,9 +223,9 @@ Job template                                            objective               
 ``poc-nginx_onboarding_nginx_sync_step3_master``        Copy from Master VM to Slave NGINX                  ``playbooks/poc-nginx_master.yaml``             ``onboarding_nginx_sync_step3_master``          ``localhost``                                   ``localhost``                                   ``cred_NGINX``
 =====================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
 
-==============================================  =============================================   =============================================
+==============================================  =============================================   =========================================================
 Extra variable                                  Description                                     Example                                      
-==============================================  =============================================   =============================================
+==============================================  =============================================   =========================================================
 ``extra_app_protect_monitor_ip``                Kibana for NGINX App Protect                    ``10.0.0.20``
 ``extra_app_protect_repo``                      repo that stores NAP install scripts            ``http://10.0.0.19``
 ``extra_availability_zone``                     availability zones                              ``[1, 2]``
@@ -233,7 +233,7 @@ Extra variable                                  Description                     
 ``extra_elb_management_name``                   ELB for outbound connection during install      ``outbound-management-vmss-nginx-external``
 ``extra_gw_dataplane``                          eth1 GW                                         ``10.100.1.1``
 ``extra_gw_management``                         eth0 GW                                         ``10.100.0.1``
-``extra_key_data``                              admin CRT                                       ``-----BEGIN  CERTIFICATE-----XXXXXXX-----END CERTIFICATE-----``
+``extra_key_data``                              admin CRT                                       ``-----BEGIN  ... CERTIFICATE-----``
 ``extra_lb_dataplane_name``                     LB name for dataplane traffic                   ``external``
 ``extra_lb_dataplane_type``                     LB type for dataplane traffic                   ``elb``
 ``extra_location``                              region                                          ``eastus2``
@@ -245,7 +245,7 @@ Extra variable                                  Description                     
 ``extra_vmss_name``                             logical vmss_name                               ``nginxwaf``
 ``nginx_rpm_version``                           Nginx+ version to install                       ``20``
 ``extra_platform_name``                         logical platform_name                           ``myPlatform``
-``extra_platform_tags``                         logical platform_tags                           ``environment=DMO platform=Inbound project=CloudBuilderf5``
+``extra_platform_tags``                         logical platform_tags                           ``environment=DMO ...``
 ``extra_project_name``                          logical project_name                            ``CloudBuilderf5``
 ``extra_route_prefix_on_premise``               cross management subnet                         ``10.0.0.0/24``
 ``extra_subnet_dataplane_name``                 logical name for eth1 subnet                    ``nginx``
@@ -256,7 +256,7 @@ Extra variable                                  Description                     
 ``extra_nginx_crt``                             NGINX+ certificate (PEM format)                 ``-----BEGIN  ... CERTIFICATE-----``
 ``extra_webhook_email``                         e-mail address                                  ``admin@acme.com``
 ``extra_webhook_vm_name``                       VM name                                         ``autoscale-f5``
-==============================================  =============================================   =============================================
+==============================================  =============================================   =========================================================
 
 
 ## BIG-IP Advanced WAF
