@@ -1,5 +1,5 @@
 Autoscale F5 products in Microsoft Azure
-====================================
+==================================================
 .. contents:: Table of Contents
 
 Summary
@@ -276,55 +276,58 @@ BIG-IP Advanced WAF
 
 Create and launch a workflow template ``wf-create_vmss_device-group_awaf`` that include those Job templates in this order:
 
-| Job name      | objective     | playbook      | activity      | inventory     | limit         | credential    |
-| ------------- | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- |
-| ``poc-azure_create-vmss-bigip``                 |       | ``create-vmss-bigip`` | ``playbooks/poc-azure.yaml`` | ``my_project`` | ``localhost`` | ``my_azure_credential`` |
-| ``poc-azure_set-vmss-master_vm``                |       | ``set-vmss-master_vm`` | ``playbooks/poc-azure.yaml`` | ``my_project`` | ``localhost`` | ``my_azure_credential`` |
-| ``poc-azure_get-vmss-facts``                    |       | ``get-vmss-facts`` | ``playbooks/poc-azure.yaml`` | ``my_project`` | ``localhost`` | ``my_azure_credential`` |
-| ``poc-f5_do_vmss_device-group``                 |       | ``do_vmss_device-group`` | ``playbooks/poc-f5.yaml`` | ``my_project`` | ``localhost`` | ``my_azure_credential`` |
-| ``poc-f5-as3_vmss_device-group_create_log_profile``     | ``as3_vmss_device-group_create`` |  | ``playbooks/poc-f5.yaml`` | ``my_project`` | ``localhost`` | ``my_azure_credential`` |
-| ``poc-f5-bigiq_vmss_device-group_discover``     |       | ``bigiq_vmss_device-group_discover`` | ``playbooks/poc-f5.yaml`` | ``my_project`` | ``localhost`` | ``my_azure_credential`` |
-| ``poc-azure_create-vmss-autoscale``             |       | ``create-vmss-autoscale`` | ``playbooks/poc-azure.yaml`` | ``my_project`` | ``localhost`` | ``my_azure_credential`` |
+=====================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+Job template                                            objective                                           playbook                                        activity                                        inventory                                       limit                                           credential
+=====================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+``poc-azure_create-vmss-bigip``                         CREATE a VMSS                                       ``playbooks/poc-azure.yaml``                    ``create-vmss-bigip``                                  ``my_project``                                  ``localhost``                                   ``my_azure_credential``
+``poc-azure_set-vmss-master_vm``                        Protect a VM 'master' from scale in action          ``playbooks/poc-azure.yaml``                    ``set-vmss-master_vm``                                  ``my_project``                                  ``localhost``                                   ``my_azure_credential``
+``poc-azure_get-vmss-facts``                            GET VMSS IPs                                        ``playbooks/poc-azure.yaml``                    ``get-vmss-facts``                                  ``my_project``                                  ``localhost``                                   ``my_azure_credential``
+``poc-f5_do_vmss_device-group``                         Onboard BIG-IP                                      ``playbooks/poc-f5.yaml``                       ``do_vmss_device-group``                                  ``my_project``                                  ``localhost``                                   ``my_azure_credential``
+``poc-f5-as3_vmss_device-group_create_log_profile``     CREATE shared ASM log profile                       ``playbooks/poc-f5.yaml``                       ``as3_vmss_device-group_create``                                  ``my_project``                                  ``localhost``                                   ``my_azure_credential``
+``poc-f5-bigiq_vmss_device-group_discover``             Discover BIG-IP by BIG-IQ                           ``playbooks/poc-f5.yaml``                       ``bigiq_vmss_device-group_discover``                                  ``my_project``                                  ``localhost``                                   ``my_azure_credential``
+``poc-azure_create-vmss-autoscale``                     CREATE autoscaling policy                           ``playbooks/poc-azure.yaml``                    ``create-vmss-autoscale``                                  ``my_project``                                  ``localhost``                                   ``my_azure_credential``
+=====================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
 
-| Extra variable        | Description | Example of value      |
-| -------------         | ------------- | ------------- |
-| ``extra_admin_user``      | admin user name on BIG-IP| ``admin`` |
-| ``extra_admin_password``  | admin user password on BIG-IP| ``Ch4ngeMe!`` |
-| ``extra_port_mgt``        | management port on BIG-IP| ``443`` |
-| ``extra_key_data``        | admin CRT | ``-----BEGIN  CERTIFICATE-----XXXXXXX-----END CERTIFICATE-----`` |
-| ``extra_offer``           | offer | ``f5-big-ip-byol`` |
-| ``extra_sku``             | OS distrib version | ``7.4`` |
-| ``extra_vm_size``         | VM type | ``Standard_DS4_v2`` |
-| ``extra_device_modules``  | List of modules to discover by BIG-IQ | ``ltm,asm,security_shared`` |
-| ``extra_as3_template``         |  | ``as3_security_logging.jinja2`` |
-| ``extra_availability_zone``         | availability zones | ``[1, 2]`` |
-| ``extra_bigiq_admin_password``         |  | ``Ch4ngeMe!`` |
-| ``extra_bigiq_admin_user``         |  | ``admin`` |
-| ``extra_bigiq_device_discovery_state``       |  | ``present`` |
-| ``extra_bigiq_ip_mgt``       |  | ``10.0.0.27`` |
-| ``extra_bigiq_port_mgt``       |  | ``443`` |
-| ``extra_dataplane_subnet_address_mask``       | eth1 subnet | ``24`` |
-| ``extra_dcd_ip``       |  | ``10.0.0.28`` |
-| ``extra_dcd_port``       |  | ``8514`` |
-| ``extra_dcd_servers``       |  | ``[{''address'': ''10.0.0.28'', ''port'': ''8514''}]`` |
-| ``extra_elb_management_name``       | External LB for outbound connection during install | ``outbound-management-vmss-awaf`` |
-| ``extra_gw_dataplane``       | eth1 GW | ``10.100.2.1`` |
-| ``extra_gw_management``       | eth0 GW | ``10.100.0.1`` |
-| ``extra_lb_dataplane_name``       | LB name for dataplane traffic | ``external`` |
-| ``extra_lb_dataplane_type``       | LB type for dataplane traffic | ``ilb`` |
-| ``extra_licensing``       |  | ``BIGIQ`` |
-| ``extra_location``       | Azure region | ``eastus2`` |
-| ``extra_platform_name`` | logical platform_name | ``myPlatform`` |
-| ``extra_platform_tags`` | logical platform_tags | environment=DMO platform=Inbound project=CloudBuilderf5 |
-| ``extra_project_name`` | logical project_name | CloudBuilderf5 |
-| ``extra_route_prefix_on_premise`` | cross management subnet | 10.0.0.0/24 |
-| ``extra_subnet_dataplane_name``       | logical name for eth1 subnet | ``external`` |
-| ``extra_template_do``       |  | ``do-vmss-standalone-2nic-awaf-BIGIQ.json`` |
-| ``extra_upstream_lb_vip``       |  | ``10.100.3.10`` |
-| ``extra_vmss_capacity``       | initial vmss_capacity | ``2`` |
-| ``extra_vmss_name``       | logical vmss_name | ``awaf`` |
-| ``extra_webhook_email``                   | NGINX+ certificate | ``admin@acme.com`` |
-| ``extra_webhook_vm_name``                 | NGINX+ certificate | ``autoscale-f5`` |
+==============================================  =============================================   =========================================================
+Extra variable                                  Description                                     Example                                      
+==============================================  =============================================   =========================================================
+``extra_admin_user``                            admin user name on BIG-IP                       ``admin``
+``extra_admin_password``                        admin user password on BIG-IP                   ``Ch4ngeMe!``
+``extra_port_mgt``                              management port on BIG-IP                       ``443``
+``extra_key_data``                              admin CRT                                       ``-----BEGIN  ... CERTIFICATE-----``
+``extra_offer``                                 offer                                           ``f5-big-ip-byol``
+``extra_sku``                                   OS distrib version                              ``7.4``
+``extra_vm_size``                               VM type                                         ``Standard_DS4_v2``
+``extra_device_modules``                        List of modules to discover by BIG-IQ           ``ltm,asm,security_shared``
+``extra_as3_template``                          AS template to deploy                           ``as3_security_logging.jinja2``
+``extra_availability_zone``                     availability zones                              ``[1, 2]``
+``extra_bigiq_admin_password``                                                                  ``Ch4ngeMe!``
+``extra_bigiq_admin_user``                                                                      ``admin``
+``extra_bigiq_device_discovery_state``                                                          ``present``
+``extra_bigiq_ip_mgt``                                                                          ``10.0.0.27``
+``extra_bigiq_port_mgt``                                                                        ``443``
+``extra_dataplane_subnet_address_mask``         eth1 subnet                                     ``24``
+``extra_dcd_ip``                                BIG-IQ lognode IP                               ``10.0.0.28``
+``extra_dcd_port``                              BIG-IQ lognode port                             ``8514``
+``extra_dcd_servers``                           BIG-IQ lognode servers or ILB VIP for ASM log   ``[{''address'': ''10.0.0.28'', ''port'': ''8514''}]``
+``extra_elb_management_name``                   ELB for outbound connection during install      ``outbound-management-vmss-awaf``
+``extra_gw_dataplane``                          eth1 GW                                         ``10.100.2.1``
+``extra_gw_management``                         eth0 GW                                         ``10.100.0.1``
+``extra_lb_dataplane_name``                     LB name for dataplane traffic                   ``external``
+``extra_lb_dataplane_type``                     LB type for dataplane traffic                   ``ilb``
+``extra_licensing``                             Licencing model for BIG-IP                      ``BIGIQ``
+``extra_location``                              Azure region                                    ``eastus2``
+``extra_platform_name``                         logical platform_name                           ``myPlatform``
+``extra_platform_tags``                         logical platform_tags                           ``environment=DMO ...``
+``extra_project_name``                          logical project_name                            ``CloudBuilderf5``
+``extra_route_prefix_on_premise``               cross management subnet                         ``10.0.0.0/24 ``
+``extra_subnet_dataplane_name``                 logical name for eth1 subnet                    ``external``
+``extra_template_do``                                                                           ``do-vmss-standalone-2nic-awaf-BIGIQ.json``
+``extra_upstream_lb_vip``                       upstream server or ILB or AppGW                 ``10.100.3.10``
+``extra_vmss_capacity``                         initial vmss_capacity                           ``2``
+``extra_vmss_name``                             logical vmss_name                               ``awaf``
+``extra_webhook_email``                         e-mail address                                  ``admin@acme.com``
+``extra_webhook_vm_name``                       VM name                                         ``autoscale-f5``
 
 ## NGINX south | NGINX ADC
 Create and launch a workflow template ``wf-create_vmss_nginx_adc`` that include those Job templates in this order:
