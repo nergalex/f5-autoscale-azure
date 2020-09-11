@@ -1,24 +1,3 @@
-=====  =====  ======
-  A      B    A or B or C
-=====  =====  ======
-False  False  False
-True   False  True
-=====  =====  ======
-
-
-==============================================  =============================================   =============================================   =============================================   =============================================   =============================================
-Job template                                    playbook                                        activity                                        inventory                                       limit                                           credential
-==============================================  =============================================   =============================================   =============================================   =============================================   =============================================
-``poc-azure_create_hub_edge_security_inbound``  ``playbooks/poc-azure.yaml``                    ``create_hub_edge_security_inbound``            ``my_project``                                  ``localhost``                                   ``my_azure_credential``
-``poc-azure_create-vm-nginx_unit``              ``playbooks/poc-azure.yaml``                    ``create-vm-nginx_unit``                        ``my_project``                                  ``localhost``                                   ``my_azure_credential``
-``poc-nginx_onboarding_system_vm``              ``playbooks/poc-nginx_vm.yaml``                 ``onboarding_system``                           ``localhost``                                   ``localhost``                                   ``cred_NGINX``
-``poc-nginx_onboarding_nginx_unit``             ``playbooks/poc-azure.yaml``                    ``onboarding_nginx_unit``                       ``localhost``                                   ``localhost``                                   ``cred_NGINX``
-==============================================  =============================================   =============================================   =============================================   =============================================   =============================================
-
-
-
-
-
 Autoscale F5 products in Microsoft Azure
 ==================================================
 
@@ -207,35 +186,42 @@ Deployment
 Create and launch a workflow template ``wf-create_create_edge_security_inbound`` that include those Job templates in this order:
 In ``poc-azure_create_hub_edge_security_inbound``, remove ``virtual_network_gateway`` task and routes to ``virtual_network_gateway`` if a vNet peering is used to interconnect your cross-management vNet.
 
+==============================================  =============================================   =============================================   =============================================   =============================================   =============================================
+Job template                                    playbook                                        activity                                        inventory                                       limit                                           credential
+==============================================  =============================================   =============================================   =============================================   =============================================   =============================================
+``poc-azure_create_hub_edge_security_inbound``  ``playbooks/poc-azure.yaml``                    ``create_hub_edge_security_inbound``            ``my_project``                                  ``localhost``                                   ``my_azure_credential``
+``poc-azure_create-vm-nginx_unit``              ``playbooks/poc-azure.yaml``                    ``create-vm-nginx_unit``                        ``my_project``                                  ``localhost``                                   ``my_azure_credential``
+``poc-nginx_onboarding_system_vm``              ``playbooks/poc-nginx_vm.yaml``                 ``onboarding_system``                           ``localhost``                                   ``localhost``                                   ``cred_NGINX``
+``poc-nginx_onboarding_nginx_unit``             ``playbooks/poc-azure.yaml``                    ``onboarding_nginx_unit``                       ``localhost``                                   ``localhost``                                   ``cred_NGINX``
+==============================================  =============================================   =============================================   =============================================   =============================================   =============================================
 
+==============================================  =============================================   =============================================
+Extra variable                                  Description                                     Example                                      
+==============================================  =============================================   =============================================
+``extra_availability_zone``                     availability zones                              ``[1, 2]``
+``extra_external_subnet_address_prefix``        BIG-IP dataplane subnet                         ``10.100.2.0/24``
+``extra_internal_subnet_address_prefix``        NGINX South dataplane subnet                    ``10.100.2.0/24``
+``extra_gateway_subnet_address_prefix``         Subnet dedicated to VPN GW                      ``10.100.255.0/24``
+==============================================  =============================================   =============================================
 
-| Job template  | playbook      | activity      | inventory     | limit         | credential   |
-| ------------- | ------------- | ------------- | ------------- | ------------- |------------- |
-
-
-| Extra variable| Description | Example of value      |
-| ------------- | ------------- | ------------- |
-| ``extra_availability_zone``               | availability zones | ``[1, 2]`` |
-| ``extra_external_subnet_address_prefix``  | BIG-IP dataplane subnet | ``10.100.2.0/24`` |
-| ``extra_internal_subnet_address_prefix``  | NGINX South dataplane subnet | ``10.100.2.0/24`` |
-| ``extra_gateway_subnet_address_prefix``   | Subnet dedicated to VPN GW | ``10.100.255.0/24`` |
-...todo...
-
-## NGINX south | NGINX ADC
+NGINX South (API GW))
+###############
 Create and launch a workflow template ``wf-create_vmss_nginx_app_protect`` that include those Job templates in this order:
 
-| Job name      | objective     | playbook      | activity      | inventory     | limit         | credential    |
-| ------------- | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- |
-| ``poc-azure_create-vmss-nginx-2NIC_1LB``                | Create VMSS                                       | ``playbooks/poc-azure.yaml``        | ``create-vmss-nginx-2NIC_1LB``                 | ``my_project`` | ``localhost`` | ``my_azure_credential`` |
-| ``poc-azure_set-vmss-master_vm``                        | Set a Master VM                                   | ``playbooks/poc-azure.yaml``        | ``set-vmss-master_vm``                         | ``my_project`` | ``localhost`` | ``my_azure_credential`` |
-| ``poc-azure_create-vmss-extension-nginx_app_protect``   | Set script to install NGINX App Protect           | ``playbooks/poc-azure.yaml``        | ``create-vmss-extension-nginx_app_protect``    | ``my_project`` | ``localhost`` | ``my_azure_credential`` |
-| ``poc-azure_get-vmss-facts``                            | Get VM IPs from VMSS                              | ``playbooks/poc-azure.yaml``        | ``get-vmss-facts``                             | ``my_project`` | ``localhost`` | ``my_azure_credential`` |
-| ``poc-nginx_onboarding_system``                         | Configure system variable                         | ``playbooks/poc-azure.yaml``        | ``onboarding_system``                          | ``localhost`` | ``localhost`` | ``cred_NGINX`` |
-| ``poc-nginx_onboarding_nginx_app_protect``              | Configure NGINX App Protect                       | ``playbooks/poc-azure.yaml``        | ``onboarding_nginx_app_protect``               | ``localhost`` | ``localhost`` | ``cred_NGINX`` |
-| ``poc-azure_create-vmss-autoscale``                     | Create an autoscale policy                        | ``playbooks/poc-azure.yaml``        | ``create-vmss-autoscale``                      | ``my_project`` | ``localhost`` | ``my_vmss_credential`` |
-| ``poc-nginx_onboarding_nginx_sync_step1_master``        | -Configure Master VM as a Master NGINX            | ``playbooks/poc-nginx_master.yaml`` | ``onboarding_nginx_sync_step1_master``         | ``localhost`` | ``localhost`` | ``cred_NGINX`` |
-| ``poc-nginx_onboarding_nginx_sync_step2_slaves``        | -Configure Slaves VM as a Slave NGINX             | ``playbooks/poc-nginx_slaves.yaml`` | ``onboarding_nginx_sync_step2_slaves``         | ``localhost`` | ``localhost`` | ``cred_NGINX`` |
-| ``poc-nginx_onboarding_nginx_sync_step3_master``        | -Execute the copy from Master VM to Slave NGINX   | ``playbooks/poc-nginx_master.yaml`` | ``onboarding_nginx_sync_step3_master``         | ``localhost`` | ``localhost`` | ``cred_NGINX`` |
+=====================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+Job template                                            objective                                           playbook                                        activity                                        inventory                                       limit                                           credential
+=====================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+``poc-azure_create-vmss-nginx-2NIC_1LB``                 Create VMSS                                        ``playbooks/poc-azure.yaml``                    ``create-vmss-nginx-2NIC_1LB``                  ``my_project``                                  ``localhost``                                   ``my_azure_credential``
+``poc-azure_set-vmss-master_vm``                         Set a Master VM                                    ``playbooks/poc-azure.yaml``                    ``set-vmss-master_vm``                          ``my_project``                                  ``localhost``                                   ``my_azure_credential``
+``poc-azure_create-vmss-extension-nginx_app_protect``    Set script to install NGINX App Protect            ``playbooks/poc-azure.yaml``                    ``create-vmss-extension-nginx_app_protect``     ``my_project``                                  ``localhost``                                   ``my_azure_credential``
+``poc-azure_get-vmss-facts``                             Get VM IPs from VMSS                               ``playbooks/poc-azure.yaml``                    ``get-vmss-facts``                              ``my_project``                                  ``localhost``                                   ``my_azure_credential``
+``poc-nginx_onboarding_system``                          Configure system variable                          ``playbooks/poc-azure.yaml``                    ``onboarding_system``                           ``localhost``                                   ``localhost``                                   ``cred_NGINX``
+``poc-nginx_onboarding_nginx_app_protect``               Configure NGINX App Protect                        ``playbooks/poc-azure.yaml``                    ``onboarding_nginx_app_protect``                ``localhost``                                   ``localhost``                                   ``cred_NGINX``
+``poc-azure_create-vmss-autoscale``                      Create an autoscale policy                         ``playbooks/poc-azure.yaml``                    ``create-vmss-autoscale``                       ``my_project``                                  ``localhost``                                   ``my_vmss_credential``
+``poc-nginx_onboarding_nginx_sync_step1_master``         Configure Master VM as a Master NGINX              ``playbooks/poc-nginx_master.yaml``             ``onboarding_nginx_sync_step1_master``          ``localhost``                                   ``localhost``                                   ``cred_NGINX``
+``poc-nginx_onboarding_nginx_sync_step2_slaves``         Configure Slaves VM as a Slave NGINX               ``playbooks/poc-nginx_slaves.yaml``             ``onboarding_nginx_sync_step2_slaves``          ``localhost``                                   ``localhost``                                   ``cred_NGINX``
+``poc-nginx_onboarding_nginx_sync_step3_master``         -Execute the copy from Master VM to Slave NGINX    ``playbooks/poc-nginx_master.yaml``             ``onboarding_nginx_sync_step3_master``          ``localhost``                                   ``localhost``                                   ``cred_NGINX``
+=====================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
 
 | Extra variable| Description | Example of value      |
 | ------------- | ------------- | ------------- |
