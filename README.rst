@@ -471,8 +471,9 @@ Autoscale
 =====================
 BIG-IP cluster in sync-failover
 ################################
-Limitation: :kbd:`8 cluster members = **8 BIG-IP VM instances** in VMSS`
-Benefit: **time to be operational** = Application Services deployed
+
+- Limitation: :kbd:`8 cluster members = **8 BIG-IP VM instances** in VMSS`
+- Benefit: **time to be operational** = Application Services deployed
 
 Scale Out
 *********
