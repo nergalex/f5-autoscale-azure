@@ -1,4 +1,4 @@
-!/usr/bin/python
+#!/usr/bin/python
 #
 # Copyright (c) 2017 Yuwei Zhou, <yuwzho@microsoft.com>
 #

@@ -86,7 +86,7 @@ Demo
     <a href="http://www.youtube.com/watch?v=-zzKjA_mFIY"><img src="http://img.youtube.com/vi/-zzKjA_mFIY/0.jpg" width="200" height="200" title="Scale In VMSS BIG-IP managed by BIG-IQ" alt="Scale In VMSS BIG-IP managed by BIG-IQ"></a>
 
 Pre-requisites
-###############
+==============
 
 Ansible Tower
 *********************
@@ -140,7 +140,6 @@ If ``azure-mgmt-compute`` < ``10.0.0`` then use last update from azure_preview_m
     $ sudo vi /etc/ansible/roles/azure.azure_preview_modules/defaults/main.yml
         skip_azure_sdk: false
 
-
 Custom module for azure_preview_modules
 --------
 Copy modules below to ``/etc/ansible/roles/azure.azure_preview_modules/library/``:
@@ -160,10 +159,9 @@ REDENTIAL TYPE                                            USERNAME              
 ``Machine``                                             ``my_VM_admin_user``                                ``my_VM_admin_user_key``                        ``my_VM_admin_user_CRT``                        ``sudo``
 =====================================================   =============================================       =============================================   =============================================   =============================================
 
-Technical consideration
-==================================================
-Code engineering
-###############
+Role structure
+--------
+
 
 - Deployment is based on ``workflow template``. Example: ``workflow template``=``wf-create_create_edge_security_inbound`` ;
 - A ``workflow template`` includes multiple ``job template``. Example: ``job template``=``poc-azure_create_hub_edge_security_inbound``
@@ -188,11 +186,11 @@ Code engineering
 
 - The specified ``play`` contains ``tasks`` to execute. Example: play=``create_hub_edge_security_inbound.yaml``
 
-Autoscale
-###############
-:kbd:`ToDo`
+Consul by Hashicorp
+*********************
+Refer to this `article <https://github.com/nergalex/f5-sslo-category#consul>`_ to install Consul.
 
-Deploy infrastructure
+Deploy a Edge Security replica
 ==================================================
 1. Azure - network components
 ###############
@@ -218,7 +216,7 @@ Extra variable                                  Description                     
 ``extra_gateway_subnet_address_prefix``         Subnet dedicated to VPN GW                      ``10.100.255.0/24``
 ==============================================  =============================================   =============================================
 
-2. NGINX App Protect - North
+2. NGINX App Protect - WAF
 ###############
 Create and launch a workflow template ``wf-create_vmss_nginx_app_protect`` that include those Job templates in this order:
 
@@ -243,7 +241,7 @@ Extra variable                                  Description                     
 ``extra_app_protect_monitor_ip``                Kibana for NGINX App Protect                    ``10.0.0.20``
 ``extra_app_protect_repo``                      repo that stores NAP install scripts            ``http://10.0.0.19``
 ``extra_availability_zone``                     availability zones                              ``[1, 2]``
-``extra_dataplane_subnet_address_mask``         eth1 subnet                                     ``24``
+``extra_dataplane_subnet_address_mask``         eth1 subnet mask                                ``24``
 ``extra_elb_management_name``                   ELB for outbound connection during install      ``outbound-management-vmss-nginx-external``
 ``extra_gw_dataplane``                          eth1 GW                                         ``10.100.1.1``
 ``extra_gw_management``                         eth0 GW                                         ``10.100.0.1``
@@ -273,7 +271,7 @@ Extra variable                                  Description                     
 ==============================================  =============================================   =========================================================
 
 
-3. BIG-IP Advanced WAF
+3. BIG-IP - Advanced WAF
 ###############
 
 Create and launch a workflow template ``wf-create_vmss_device-group_awaf`` that include those Job templates in this order:
@@ -308,7 +306,7 @@ Extra variable                                  Description                     
 ``extra_bigiq_device_discovery_state``                                                          ``present``
 ``extra_bigiq_ip_mgt``                                                                          ``10.0.0.27``
 ``extra_bigiq_port_mgt``                                                                        ``443``
-``extra_dataplane_subnet_address_mask``         eth1 subnet                                     ``24``
+``extra_dataplane_subnet_address_mask``         eth1 subnet mask                                ``24``
 ``extra_dcd_ip``                                BIG-IQ lognode IP                               ``10.0.0.28``
 ``extra_dcd_port``                              BIG-IQ lognode port                             ``8514``
 ``extra_dcd_servers``                           BIG-IQ lognode servers or ILB VIP for ASM log   ``[{''address'': ''10.0.0.28'', ''port'': ''8514''}]``
@@ -332,7 +330,7 @@ Extra variable                                  Description                     
 ``extra_webhook_vm_name``                       VM name                                         ``autoscale-f5``
 ==============================================  =============================================   =========================================================
 
-4. NGINX+ API GW (South)
+4. NGINX+ - API GW
 ###############
 Create and launch a workflow template ``wf-create_vmss_nginx_apigw`` that include those Job templates in this order:
 
@@ -357,7 +355,7 @@ Extra variable                                  Description                     
 ``extra_app_protect_monitor_ip``                Kibana for NGINX App Protect                    ``10.0.0.20``
 ``extra_app_protect_repo``                      repo that stores NAP install scripts            ``http://10.0.0.19``
 ``extra_availability_zone``                     availability zones                              ``[1, 2]``
-``extra_dataplane_subnet_address_mask``         eth1 subnet                                     ``24``
+``extra_dataplane_subnet_address_mask``         eth1 subnet mask                                ``24``
 ``extra_elb_management_name``                   ELB for outbound connection during install      ``outbound-management-vmss-nginx-external``
 ``extra_gw_dataplane``                          eth1 GW                                         ``10.100.1.1``
 ``extra_gw_management``                         eth0 GW                                         ``10.100.0.1``
@@ -385,6 +383,41 @@ Extra variable                                  Description                     
 ``extra_vip_address_list_nginx_second_line``    routed subnet for VIP                           ``[10.100.11.0/24]``
 ==============================================  =============================================   =========================================================
 
+5. NGINX Unit - webhook
+###############
+Create a dedicated user *webhook* on Tower that have rights to only execute Autoscale workflows.
+Create and launch a workflow template ``wf-create_create_vm_app_nginx_unit`` that include those Job templates in this order:
+
+=====================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+Job template                                            objective                                           playbook                                        activity                                        inventory                                       limit                                           credential
+=====================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+``poc-azure_create-vm-nginx_unit``                      Create a VM                                         ``playbooks/poc-azure.yaml``                    ``create-vm-nginx_unit``                        ``my_project``                                  ``localhost``                                   ``my_azure_credential``
+``poc-onboarding_nginx_unit_faas_autoscale``            Deploy an Webhook App                               ``playbooks/poc-nginx_vm.yaml``                 ``onboarding_nginx_unit_faas_autoscale``        ``localhost``                                                                                   ``cred_NGINX``
+=====================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+
+==============================================  =============================================   ================================================================================================================================================================================================================
+Extra variable                                  Description                                     Example
+==============================================  =============================================   ================================================================================================================================================================================================================
+``extra_vm_name``                               VM name                                         ``autoscale-f5``
+``extra_vm_ip_mgt``                                                                             ``10.100.0.10``
+``extra_vm_size``                                                                               ``Standard_B4ms``
+``extra_availability_zone``                     availabiltity zones                             ``[1, 2]``
+``infra_admin_username``                        admin user name                                 ``-----BEGIN  CERTIFICATE-----XXXXXXX-----END CERTIFICATE-----``
+``extra_key_data``                              admin CRT to secure admin user access to VM     ``-----BEGIN  CERTIFICATE-----XXXXXXX-----END CERTIFICATE-----``
+``extra_location``                              region. Set by webhook                          ``eastus2``
+``extra_platform_name``                         logical platform_name                           ``myPlatform``
+``extra_platform_tags``                                                                         ``environment=DMO project=CloudBuilderf5``
+``extra_route_prefix_on_premise``               cross management subnet                         ``10.0.0.0/24``
+``extra_tower_hostname``                                                                        ``1.1.1.1``
+``extra_tower_username``                                                                        ``webhook-login``
+``extra_tower_password``                                                                        ``*****************``
+``extra_tower_client_id``                                                                       ``*****************``
+``extra_tower_client_secret``                                                                   ``******************``
+``extra_webhook_ca_pem``                                                                        ``-----BEGIN CERTIFICATE...``
+``extra_webhook_cert_pem``                                                                      ``-----BEGIN CERTIFICATE...``
+``extra_webhook_key_pem``                                                                       ``-----BEGIN RSA PRIVATE KEY...``
+``faas_app_name``                                                                               ``f5autoscale``
+``faas_app_repo``                                                                               ``https://github.com/nergalex/webhook_public.git``
 
 Deploy an Application
 ==================================================
@@ -439,5 +472,86 @@ Extra variable                                  Description                     
 ==============================================  =============================================   ================================================================================================================================================================================================================
 
 
+Autoscale
+=====================
+BIG-IP - sync-failover
+#####################
+Limitation: :kbd:`8 cluster members = 8 BIG-IP instances in VMSS`
 
+Scale Out
+---------------------
+Create and launch a workflow template ``wf-scale_out_bigip`` that include those Job templates in this order:
+
+=====================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+Job template                                            objective                                           playbook                                        activity                                        inventory                                       limit                                           credential
+=====================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+``poc-azure_get-vmss-facts-credential_set``             Get info of current BIG-IP VMSS                     ``playbooks/poc-azure.yaml``                    ``get-vmss_hub-facts``                          ``my_project``                                  ``localhost``                                   ``my_azure_credential``
+``poc-f5_do_scale_out``                                 Onboard BIG-IP                                      ``playbooks/poc-f5.yaml``                       ``do_vmss_device-group``                                  ``my_project``                                  ``localhost``                                   ``my_azure_credential``
+``poc-f5-bigiq_discover_scale_out``                     Discover BIG-IP by BIG-IQ                           ``playbooks/poc-f5.yaml``                       ``bigiq_vmss_device-group_discover``                                  ``my_project``                                  ``localhost``                                   ``my_azure_credential``
+=====================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+
+==============================================  =============================================   ================================================================================================================================================================================================================
+Extra variable                                  Description                                     Example
+==============================================  =============================================   ================================================================================================================================================================================================================
+``extra_admin_password``                        BIG-IP password                                 ``Ch4ngeMe!``
+``extra_admin_user``                            BIG-IP admin user                               ``admin``
+``extra_bigiq_admin_password``                  BIG-IQ password                                 ``Ch4ngeMe!``
+``extra_bigiq_admin_user``                      BIG-IQ user                                     ``admin``
+``extra_bigiq_ip_mgt``                          BIG-IQ ip mgt                                   ``10.0.0.27``
+``extra_bigiq_port_mgt``                        BIG-IQ mgt port                                 ``443``
+``extra_dataplane_subnet_address_mask``         eth1 subnet mask                                ``24``
+``extra_device_modules``                        List of modules to discover by BIG-IQ           ``ltm,asm,security_shared``
+``extra_gw_dataplane``                          eth1 GW                                         ``10.100.2.1``
+``extra_gw_management``                         eth0 GW                                         ``10.100.0.1``
+``extra_location``                              region. Set by webhook                          ``eastus2``
+``extra_platform_name``                         logical platform_name                           ``myPlatform``
+``extra_port_mgt``                              management port on BIG-IP                       ``443``
+``extra_project_name``                          logical project_name                            ``CloudBuilderf5``
+``extra_route_prefix_on_premise``               cross management subnet                         ``10.0.0.0/24``
+``extra_vmss_name``                             vmss_name. Set by webhook                       ``awaf``
+==============================================  =============================================   ================================================================================================================================================================================================================
+
+Scale In
+---------------------
+Create and launch a workflow template ``wf-scale_in_bigip`` that include those Job templates in this order:
+
+=====================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+Job template                                            objective                                           playbook                                        activity                                        inventory                                       limit                                           credential
+=====================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+``poc-azure_get-vmss-facts-credential_set``             Get info of current BIG-IP VMSS                     ``playbooks/poc-azure.yaml``                    ``get-vmss_hub-facts``                          ``my_project``                                  ``localhost``                                   ``my_azure_credential``
+``poc-f5_bigiq_get_device_scale_in``                    Define deleted BIGIP from managed device list       ``playbooks/poc-f5.yaml``                       ``bigiq_get_device_scale_in``                   ``localhost``
+``poc-f5_bigiq_discover_scale_in``                      Remove BIG-IP from managed device list              ``playbooks/poc-f5.yaml``                       ``bigiq_discover_scale_in``                     ``localhost``
+``poc-f5_do_scale_in``                                  Onboard existing BIG-IP (cluster change)            ``playbooks/poc-f5.yaml``                       ``bigiq_discover_scale_in``                     ``localhost``
+``poc-f5_bigiq_revoke_scale_in``                        Remove BIG-IP from licence pool                     ``playbooks/poc-f5.yaml``                       ``bigiq_revoke_scale_in``                       ``localhost``
+=====================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+
+==============================================  =============================================   ================================================================================================================================================================================================================
+Extra variable                                  Description                                     Example
+==============================================  =============================================   ================================================================================================================================================================================================================
+``extra_admin_password``                        BIG-IP password                                 ``Ch4ngeMe!``
+``extra_admin_user``                            BIG-IP admin user                               ``admin``
+``extra_bigiq_admin_password``                  BIG-IQ password                                 ``Ch4ngeMe!``
+``extra_bigiq_admin_user``                      BIG-IQ user                                     ``admin``
+``extra_bigiq_ip_mgt``                          BIG-IQ ip mgt                                   ``10.0.0.27``
+``extra_bigiq_port_mgt``                        BIG-IQ mgt port                                 ``443``
+``extra_dataplane_subnet_address_mask``         eth1 subnet mask                                ``24``
+``extra_device_modules``                        List of modules to discover by BIG-IQ           ``ltm,asm,security_shared``
+``extra_gw_dataplane``                          eth1 GW                                         ``10.100.2.1``
+``extra_gw_management``                         eth0 GW                                         ``10.100.0.1``
+``extra_location``                              region. Set by webhook                          ``eastus2``
+``extra_platform_name``                         logical platform_name                           ``myPlatform``
+``extra_port_mgt``                              management port on BIG-IP                       ``443``
+``extra_project_name``                          logical project_name                            ``CloudBuilderf5``
+``extra_route_prefix_on_premise``               cross management subnet                         ``10.0.0.0/24``
+``extra_vmss_name``                             vmss_name. Set by webhook                       ``awaf``
+==============================================  =============================================   ================================================================================================================================================================================================================
+
+
+NGINX+ without Controller
+#####################
+:kbd:`ToDo`
+
+NGINX+ with NGINX Controller
+#####################
+:kbd:`ToDo`
 
