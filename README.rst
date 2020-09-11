@@ -466,13 +466,12 @@ Extra variable                                  Description                     
 ``extra_zone_name``                             subnet to attach App VMSS                       ``app``
 ==============================================  =============================================   ================================================================================================================================================================================================================
 
-
 Autoscale
 =====================
 BIG-IP cluster in sync-failover
 ################################
 
-- Limitation: :kbd:`8 cluster members = **8 BIG-IP VM instances** in VMSS`
+- Limitation: :kbd:`8 cluster members = 8 BIG-IP VM instances in VMSS`
 - Benefit: **time to be operational** = Application Services deployed
 
 Scale Out
