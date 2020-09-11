@@ -33,7 +33,6 @@ Feel free to reach `F5 people <https://www.linkedin.com/company/f5/people/>`_ fo
 
 .. figure:: _figure/Architecture_INBOUND.png
 
-
 Ecosystem
 *********************
 - NGINX+
@@ -87,12 +86,10 @@ Demo
 
 Pre-requisites
 ==============
-
 Ansible Tower
 *********************
-
 virtualenv
---------
+----------
 Create a virtualenv, follow
 `Tower admin guide <https://docs.ansible.com/ansible-tower/latest/html/administration/tipsandtricks.html#preparing-a-new-custom-virtualenv>`_
 Install ansible >= 2.9
@@ -161,8 +158,6 @@ REDENTIAL TYPE                                            USERNAME              
 
 Role structure
 --------
-
-
 - Deployment is based on ``workflow template``. Example: ``workflow template``=``wf-create_create_edge_security_inbound`` ;
 - A ``workflow template`` includes multiple ``job template``. Example: ``job template``=``poc-azure_create_hub_edge_security_inbound``
 - A ``job template`` have an associated ``playbook``. Example: ``playbook``=``playbooks/poc-azure.yaml``
@@ -208,7 +203,7 @@ Job template                                    playbook                        
 ==============================================  =============================================   =============================================   =============================================   =============================================   =============================================
 
 ==============================================  =============================================   =============================================
-Extra variable                                  Description                                     Example                                      
+Extra variable                                  Description                                     Example
 ==============================================  =============================================   =============================================
 ``extra_availability_zone``                     availability zones                              ``[1, 2]``
 ``extra_external_subnet_address_prefix``        BIG-IP dataplane subnet                         ``10.100.2.0/24``
@@ -236,7 +231,7 @@ Job template                                            objective               
 =====================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
 
 ==============================================  =============================================   =========================================================
-Extra variable                                  Description                                     Example                                      
+Extra variable                                  Description                                     Example
 ==============================================  =============================================   =========================================================
 ``extra_app_protect_monitor_ip``                Kibana for NGINX App Protect                    ``10.0.0.20``
 ``extra_app_protect_repo``                      repo that stores NAP install scripts            ``http://10.0.0.19``
@@ -289,7 +284,7 @@ Job template                                            objective               
 =====================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
 
 ==============================================  =============================================   =========================================================
-Extra variable                                  Description                                     Example                                      
+Extra variable                                  Description                                     Example
 ==============================================  =============================================   =========================================================
 ``extra_admin_user``                            admin user name on BIG-IP                       ``admin``
 ``extra_admin_password``                        admin user password on BIG-IP                   ``Ch4ngeMe!``
@@ -386,6 +381,7 @@ Extra variable                                  Description                     
 5. NGINX Unit - webhook
 ###############
 Create a dedicated user *webhook* on Tower that have rights to only execute Autoscale workflows.
+Code embedded in webhook are available `here <https://github.com/nergalex/webhook_public>`_.
 Create and launch a workflow template ``wf-create_create_vm_app_nginx_unit`` that include those Job templates in this order:
 
 =====================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
@@ -426,13 +422,13 @@ Create and launch a workflow template ``wf-create-app_inbound_awaf_device-group`
 =====================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
 Job template                                            objective                                           playbook                                        activity                                        inventory                                       limit                                           credential
 =====================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
-``poc-azure_create_vmss_app``                           Create a VMSS for App hosting                       ``playbooks/poc-azure.yaml``                    ``create-vmss-app``                             ``my_project``                                  ``localhost``                                   ``my_azure_credential`` 
-``poc-azure_get-vmss_hub-facts``                        Get info of BIG-IP VMSS                             ``playbooks/poc-azure.yaml``                    ``get-vmss_hub-facts``                          ``my_project``                                  ``localhost``                                   ``my_azure_credential`` 
-``poc-f5-create_as3_app_inbound_awaf_device-group``     Deploy App Service (AS3) on BIG-IP                  ``playbooks/poc-f5.yaml``                       ``as3_vmss_device-group_bigiq_create``          ``my_project``                                  ``localhost``                                   ``my_azure_credential`` 
-``poc-azure_get-vmss_nginx_first_line-facts``           Get info of NGINX North VMSS                        ``playbooks/poc-azure.yaml``                    ``get-vmss_nginx_first_line-facts``             ``my_project``                                  ``localhost``                                   ``my_azure_credential`` 
-``poc-nginx_create_app_app_protect``                    Deploy App Service on NGINX North                   ``playbooks/poc-nginx_master.yaml``             ``create_app_app_protect``                      ``localhost``                                   ``localhost``                                   ``cred_NGINX`` 
-``poc-azure_get-vmss_nginx_second_line-facts``          Get info of NGINX South VMSS                        ``playbooks/poc-azure.yaml``                    ``get-vmss_nginx_second_line-facts``            ``localhost``                                   ``localhost``                                   ``cred_NGINX`` 
-``poc-nginx_create_app_adc``                            Deploy App Service on NGINX South                   ``playbooks/poc-nginx_master.yaml``             ``create_app_adc``                              ``my_project``                                  ``localhost``                                   ``my_vmss_credential`` 
+``poc-azure_create_vmss_app``                           Create a VMSS for App hosting                       ``playbooks/poc-azure.yaml``                    ``create-vmss-app``                             ``my_project``                                  ``localhost``                                   ``my_azure_credential``
+``poc-azure_get-vmss_hub-facts``                        Get info of BIG-IP VMSS                             ``playbooks/poc-azure.yaml``                    ``get-vmss_hub-facts``                          ``my_project``                                  ``localhost``                                   ``my_azure_credential``
+``poc-f5-create_as3_app_inbound_awaf_device-group``     Deploy App Service (AS3) on BIG-IP                  ``playbooks/poc-f5.yaml``                       ``as3_vmss_device-group_bigiq_create``          ``my_project``                                  ``localhost``                                   ``my_azure_credential``
+``poc-azure_get-vmss_nginx_first_line-facts``           Get info of NGINX North VMSS                        ``playbooks/poc-azure.yaml``                    ``get-vmss_nginx_first_line-facts``             ``my_project``                                  ``localhost``                                   ``my_azure_credential``
+``poc-nginx_create_app_app_protect``                    Deploy App Service on NGINX North                   ``playbooks/poc-nginx_master.yaml``             ``create_app_app_protect``                      ``localhost``                                   ``localhost``                                   ``cred_NGINX``
+``poc-azure_get-vmss_nginx_second_line-facts``          Get info of NGINX South VMSS                        ``playbooks/poc-azure.yaml``                    ``get-vmss_nginx_second_line-facts``            ``localhost``                                   ``localhost``                                   ``cred_NGINX``
+``poc-nginx_create_app_adc``                            Deploy App Service on NGINX South                   ``playbooks/poc-nginx_master.yaml``             ``create_app_adc``                              ``my_project``                                  ``localhost``                                   ``my_vmss_credential``
 =====================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
 
 ==============================================  =============================================   ================================================================================================================================================================================================================
