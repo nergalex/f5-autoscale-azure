@@ -186,14 +186,14 @@ Deployment
 Create and launch a workflow template ``wf-create_create_edge_security_inbound`` that include those Job templates in this order:
 In ``poc-azure_create_hub_edge_security_inbound``, remove ``virtual_network_gateway`` task and routes to ``virtual_network_gateway`` if a vNet peering is used to interconnect your cross-management vNet.
 
-=====           =====           ======        ======        ======        ======
-Job template    playbook        activity      inventory     limit         credential
-=====           =====           ======        ======        ======        ======
-``poc-azure_create_hub_edge_security_inbound``  ``playbooks/poc-azure.yaml``    ``create_hub_edge_security_inbound``    ``my_project``  ``localhost`` ``my_azure_credential`` |
-``poc-azure_create-vm-nginx_unit``              ``playbooks/poc-azure.yaml``    ``create-vm-nginx_unit``                ``my_project``  ``localhost`` ``my_azure_credential`` |
-``poc-nginx_onboarding_system_vm``              ``playbooks/poc-nginx_vm.yaml`` ``onboarding_system``                   ``localhost``   ``localhost`` ``cred_NGINX`` |
-``poc-nginx_onboarding_nginx_unit``             ``playbooks/poc-azure.yaml``    ``onboarding_nginx_unit``               ``localhost``   ``localhost`` ``cred_NGINX`` |
-=====           =====           ======        ======        ======        ======
+=====                                           =====                           ======                                  ======          ======        ======
+Job template                                    playbook                        activity                                inventory       limit         credential
+=====                                           =====                           ======                                  ======          ======        ======
+``poc-azure_create_hub_edge_security_inbound``  ``playbooks/poc-azure.yaml``    ``create_hub_edge_security_inbound``    ``my_project``  ``localhost`` ``my_azure_credential``
+``poc-azure_create-vm-nginx_unit``              ``playbooks/poc-azure.yaml``    ``create-vm-nginx_unit``                ``my_project``  ``localhost`` ``my_azure_credential``
+``poc-nginx_onboarding_system_vm``              ``playbooks/poc-nginx_vm.yaml`` ``onboarding_system``                   ``localhost``   ``localhost`` ``cred_NGINX``
+``poc-nginx_onboarding_nginx_unit``             ``playbooks/poc-azure.yaml``    ``onboarding_nginx_unit``               ``localhost``   ``localhost`` ``cred_NGINX``
+=====                                           =====                           ======                                  ======          ======        ======
 
 
 
