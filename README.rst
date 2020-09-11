@@ -1,11 +1,3 @@
-.. code:: bash
-
-    $ sudo yum groupinstall -y "development tools"
-    $ sudo virtualenv /var/lib/awx/venv/my_env
-    $ sudo /var/lib/awx/venv/my_env/bin/pip install python-memcached psutil
-    $ sudo /var/lib/awx/venv/my_env/bin/pip install -U ansible
-
-
 Autoscale F5 products in Microsoft Azure
 ==================================================
 
@@ -92,44 +84,48 @@ virtualenv
 Create a virtualenv, follow
 `Tower admin guide <https://docs.ansible.com/ansible-tower/latest/html/administration/tipsandtricks.html#preparing-a-new-custom-virtualenv>`_
 Install ansible >= 2.9
+
 .. code:: bash
-$ sudo yum groupinstall -y "development tools"
-$ sudo virtualenv /var/lib/awx/venv/my_env
-$ sudo /var/lib/awx/venv/my_env/bin/pip install python-memcached psutil
-$ sudo /var/lib/awx/venv/my_env/bin/pip install -U ansible
+
+    $ sudo yum groupinstall -y "development tools"
+    $ sudo virtualenv /var/lib/awx/venv/my_env
+    $ sudo /var/lib/awx/venv/my_env/bin/pip install python-memcached psutil
+    $ sudo /var/lib/awx/venv/my_env/bin/pip install -U ansible
 
 
 Ensure that your virtualenv have the rights 755, else:
-```bash
-$ chmod 755 -R /var/lib/awx/venv/my_env
-```
+.. code:: bash
+    $ chmod 755 -R /var/lib/awx/venv/my_env
 
-### F5 f5devcentral.f5ansible
-This collection includes the most recently released ansible modules for BIG-IP and BIG-IQ from F5Networks. This collection packages and distributes playbooks, roles, modules, and plugins.
-source: <https://galaxy.ansible.com/f5networks/f5_modules>
-```bash
-$ sudo ansible-galaxy collection install f5networks.f5_modules -p /usr/share/ansible/collections
-```
+F5 f5devcentral.f5ansible
+--------
+This collection includes the most recently released ansible modules for BIG-IP and BIG-IQ from F5Networks.
+This collection packages and distributes playbooks, roles, modules, and plugins.
+source: `Ansible galaxy <https://galaxy.ansible.com/f5networks/f5_modules>`_
 
-### Azure azure_preview_modules
+.. code:: bash
+    $ sudo ansible-galaxy collection install f5networks.f5_modules -p /usr/share/ansible/collections
+
+Azure azure_preview_modules
+--------
 This role is the most complete and includes all the latest Azure modules. The update and bug fix are done in a more timely manner than official Ansible release.
 If you use Ansible for Azure resource provisioning purpose, you're strongly encouraged to install this role.
-Please follow install guide https://github.com/Azure/azure_preview_modules
-```bash
-$ sudo ansible-galaxy install azure.azure_preview_modules
-$ sudo /var/lib/awx/venv/my_env/bin/pip install -U -r /etc/ansible/roles/azure.azure_preview_modules/files/requirements-azure.txt
-$ sudo /var/lib/awx/venv/my_env/bin/pip show azure-mgmt-compute
-```
+Follow `install guide <https://github.com/Azure/azure_preview_modules>`_
 
-If `azure-mgmt-compute` < `10.0.0` then use last update from azure_preview_modules repo and not from Galaxy.
-`/etc/ansible/roles/` is an example of an Tower installation where `roles` are located.
-```bash
-$ sudo cd /etc/ansible/roles/
-$ sudo git clone https://github.com/Azure/azure_preview_modules.git
-$ sudo /var/lib/awx/venv/my_env/bin/pip install -r /etc/ansible/roles/azure.azure_preview_modules/files/requirements-azure.txt
-$ sudo vi /etc/ansible/roles/azure.azure_preview_modules/defaults/main.yml
-skip_azure_sdk: false
-```
+.. code:: bash
+    $ sudo ansible-galaxy install azure.azure_preview_modules
+    $ sudo /var/lib/awx/venv/my_env/bin/pip install -U -r /etc/ansible/roles/azure.azure_preview_modules/files/requirements-azure.txt
+    $ sudo /var/lib/awx/venv/my_env/bin/pip show azure-mgmt-compute
+
+If ``azure-mgmt-compute`` < ``10.0.0`` then use last update from azure_preview_modules repo and not from Galaxy.
+``/etc/ansible/roles/`` is an example of an Tower installation where ``roles`` are located.
+
+.. code:: bash
+    $ sudo cd /etc/ansible/roles/
+    $ sudo git clone https://github.com/Azure/azure_preview_modules.git
+    $ sudo /var/lib/awx/venv/my_env/bin/pip install -r /etc/ansible/roles/azure.azure_preview_modules/files/requirements-azure.txt
+    $ sudo vi /etc/ansible/roles/azure.azure_preview_modules/defaults/main.yml
+        skip_azure_sdk: false
 
 
 ### Custom module for azure_preview_modules
