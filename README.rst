@@ -547,13 +547,16 @@ BIG-IP + Consul
 
 - **Benefit**: no limitation on BIG-IP instances in a VMSS, except from Cloud Provider limitation
 - **Pain point**: time to be operational = Application Services deployed
+
 :kbd:`ToDo`
 
 NGINX+ without Controller
 #########################
+
 :kbd:`ToDo`
 
 NGINX+ with NGINX Controller
 ############################
+
 :kbd:`ToDo`
 
