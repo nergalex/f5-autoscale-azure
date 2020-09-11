@@ -220,8 +220,9 @@ Job template                                            objective               
 ``poc-azure_create-vmss-autoscale``                     Create an autoscale policy                          ``playbooks/poc-azure.yaml``                    ``create-vmss-autoscale``                       ``my_project``                                  ``localhost``                                   ``my_vmss_credential``
 ``poc-nginx_onboarding_nginx_sync_step1_master``        Configure Master VM as a Master NGINX               ``playbooks/poc-nginx_master.yaml``             ``onboarding_nginx_sync_step1_master``          ``localhost``                                   ``localhost``                                   ``cred_NGINX``
 ``poc-nginx_onboarding_nginx_sync_step2_slaves``        Configure Slaves VM as a Slave NGINX                ``playbooks/poc-nginx_slaves.yaml``             ``onboarding_nginx_sync_step2_slaves``          ``localhost``                                   ``localhost``                                   ``cred_NGINX``
-``poc-nginx_onboarding_nginx_sync_step3_master``        Execute the copy from Master VM to Slave NGINX      ``playbooks/poc-nginx_master.yaml``             ``onboarding_nginx_sync_step3_master``          ``localhost``                                   ``localhost``                                   ``cred_NGINX``
+``poc-nginx_onboarding_nginx_sync_step3_master``        Copy from Master VM to Slave NGINX                  ``playbooks/poc-nginx_master.yaml``             ``onboarding_nginx_sync_step3_master``          ``localhost``                                   ``localhost``                                   ``cred_NGINX``
 =====================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+
 
 | Extra variable| Description | Example of value      |
 | ------------- | ------------- | ------------- |
