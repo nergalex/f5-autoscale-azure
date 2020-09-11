@@ -143,7 +143,8 @@ If ``azure-mgmt-compute`` < ``10.0.0`` then use last update from azure_preview_m
 
 Custom module for azure_preview_modules
 --------
-Copy modules below to ``/etc/ansible/roles/azure.azure_preview_modules/library/``
+Copy modules below to ``/etc/ansible/roles/azure.azure_preview_modules/library/``:
+
 - ``azure_rm_autoscale.py`` (if not `fix <https://github.com/ansible-collections/azure/issues/120>` applied)
 - ``azure_rm_networkinterface_vmss_info.py``_
 - ``azure_rm_virtualmachinescaleset_2NIC.py``
@@ -158,11 +159,6 @@ REDENTIAL TYPE                                            USERNAME              
 =====================================================   =============================================       =============================================   =============================================   =============================================
 ``Machine``                                             ``my_VM_admin_user``                                ``my_VM_admin_user_key``                        ``my_VM_admin_user_CRT``                        ``sudo``
 =====================================================   =============================================       =============================================   =============================================   =============================================
-
-
-| CREDENTIAL TYPE | USERNAME      | SSH PRIVATE KEY     | SIGNED SSH CERTIFICATE         | PRIVILEGE ESCALATION METHOD    |
-| ------------- | ------------- | ------------- | ------------- | ------------- |
-| ``Machine`` | ``my_VM_admin_user`` | ``my_VM_admin_user_key`` | ``my_VM_admin_user_CRT`` | ``sudo`` |
 
 Technical consideration
 ==================================================
@@ -180,7 +176,6 @@ Code engineering
       gather_facts: no
       roles:
         - role: poc-azure
-```
 
 - A ``play`` is an ``extra variable`` named ``activity`` and set in each ``job template``. Example: ``create_hub_edge_security_inbound``
 - The specified ``play`` (or ``activity``) is launched by the ``main.yaml`` task located in the role ``tasks/main.yaml``
