@@ -1,0 +1,471 @@
+---
+- name: CREATE Resource Group
+  delegate_to: localhost
+  azure_rm_resourcegroup:
+    name: "rg-{{ extra_platform_name }}"
+    location: "{{ extra_location }}"
+    tags: "{{ extra_platform_tags }}  Name=rg-{{ extra_platform_name }} owner={{ owner }}"
+
+- name: CREATE Virtual Network
+  delegate_to: localhost
+  azure_rm_virtualnetwork:
+    resource_group: "rg-{{ extra_platform_name }}"
+    name: "vnet-{{ extra_platform_name }}"
+    location: "{{ extra_location }}"
+    address_prefixes: "{{ extra_vnet_address_prefixes }}"
+    tags: "{{ extra_platform_tags }} Name=vnet-{{ extra_platform_name }} owner={{ owner }}"
+
+- name: CREATE Network Security Group for Management access
+  delegate_to: localhost
+  azure_rm_securitygroup:
+    resource_group: "rg-{{ extra_platform_name }}"
+    name: "nsg-{{ extra_platform_name }}-management"
+    location: "{{ extra_location }}"
+    tags: "{{ extra_platform_tags }} Name=nsg-{{ extra_platform_name }}-management owner={{ owner }}"
+    rules:
+      - name: in_allow_mgt_from_bt
+        direction: Inbound
+        priority: 100
+        source_address_prefix:
+          - '{{ extra_subnet_mgt_on_premise }}'
+        access: Allow
+      - name: in_allow_mgt_from_internet
+        direction: Inbound
+        priority: 101
+        protocol: Tcp
+        destination_port_range:
+          - 22
+          - 443
+          - 8443
+        access: Allow
+      - name: out_allow_all
+        direction: Outbound
+        priority: 999
+        access: Allow
+
+- name: CREATE Network Security Group for Trust access
+  delegate_to: localhost
+  azure_rm_securitygroup:
+    resource_group: "rg-{{ extra_platform_name }}"
+    name: "nsg-{{ extra_platform_name }}-trust"
+    location: "{{ extra_location }}"
+    tags: "{{ extra_platform_tags }} Name=nsg-{{ extra_platform_name }}-trust owner={{ owner }}"
+    rules:
+      - name: in_allow_all
+        direction: Inbound
+        priority: 999
+        access: Allow
+      - name: out_allow_all
+        direction: Outbound
+        priority: 999
+        access: Allow
+
+- name: CREATE Network Security Group for Untrust access
+  delegate_to: localhost
+  azure_rm_securitygroup:
+    resource_group: "rg-{{ extra_platform_name }}"
+    name: "nsg-{{ extra_platform_name }}-untrust"
+    location: "{{ extra_location }}"
+    tags: "{{ extra_platform_tags }} Name=nsg-{{ extra_platform_name }}-external owner={{ owner }}"
+    rules:
+      - name: in_allow_external
+        direction: Inbound
+        priority: 100
+        protocol: Tcp
+        access: Allow
+      - name: out_allow_all
+        direction: Outbound
+        priority: 999
+        access: Allow
+
+- name: SET fact vrf_list
+  set_fact:
+    vrf_list:
+    - nginx
+    - external
+    - pan_dataplane
+    - internal
+    - management
+
+- name: CREATE VRF
+  delegate_to: localhost
+  azure_rm_routetable:
+    resource_group: "rg-{{ extra_platform_name }}"
+    location: "{{ extra_location }}"
+    name: "rt-{{ extra_platform_name }}-{{ item }}"
+    disable_bgp_route_propagation: True
+    tags: "{{ extra_platform_tags }} Name=rt-{{ extra_platform_name }}-{{ item }} owner={{ owner }}"
+  loop: "{{ vrf_list }}"
+
+- name: SET fact vrf_to_internet_list
+  set_fact:
+    vrf_to_internet_list:
+    - nginx
+    - management
+
+- name: CREATE default route via Internet to VRF
+  delegate_to: localhost
+  azure_rm_route:
+    resource_group: "rg-{{ extra_platform_name }}"
+    route_table_name: "rt-{{ extra_platform_name }}-{{ item }}"
+    name: 'default_internet'
+    address_prefix: '0.0.0.0/0'
+    next_hop_type: 'internet'
+  loop: "{{ vrf_to_internet_list }}"
+
+- name: CREATE Subnet Management
+  delegate_to: localhost
+  azure_rm_subnet:
+    resource_group: "rg-{{ extra_platform_name }}"
+    virtual_network: "vnet-{{ extra_platform_name }}"
+    name: "net-{{ extra_platform_name }}-management"
+    address_prefix: "{{ extra_management_subnet_address_prefix }}"
+    security_group_name: "nsg-{{ extra_platform_name }}-management"
+    route_table: "rt-{{ extra_platform_name }}-management"
+
+- name: CREATE Subnet nginx
+  delegate_to: localhost
+  azure_rm_subnet:
+    resource_group: "rg-{{ extra_platform_name }}"
+    virtual_network: "vnet-{{ extra_platform_name }}"
+    name: "net-{{ extra_platform_name }}-nginx"
+    address_prefix: "{{ extra_nginx_subnet_address_prefix }}"
+    security_group_name: "nsg-{{ extra_platform_name }}-untrust"
+    route_table: "rt-{{ extra_platform_name }}-nginx"
+
+- name: CREATE Subnet external
+  delegate_to: localhost
+  azure_rm_subnet:
+    resource_group: "rg-{{ extra_platform_name }}"
+    virtual_network: "vnet-{{ extra_platform_name }}"
+    name: "net-{{ extra_platform_name }}-external"
+    address_prefix: "{{ extra_external_subnet_address_prefix }}"
+    security_group_name: "nsg-{{ extra_platform_name }}-trust"
+    route_table: "rt-{{ extra_platform_name }}-external"
+
+- name: GET Subnet external
+  delegate_to: localhost
+  azure_rm_subnet_info:
+    resource_group: "rg-{{ extra_platform_name }}"
+    virtual_network_name: "vnet-{{ extra_platform_name }}"
+    name: "net-{{ extra_platform_name }}-external"
+  register: output_subnet_external
+
+- name: CREATE Subnet internal
+  delegate_to: localhost
+  azure_rm_subnet:
+    resource_group: "rg-{{ extra_platform_name }}"
+    virtual_network: "vnet-{{ extra_platform_name }}"
+    name: "net-{{ extra_platform_name }}-internal"
+    address_prefix: "{{ extra_internal_subnet_address_prefix }}"
+    security_group_name: "nsg-{{ extra_platform_name }}-trust"
+    route_table: "rt-{{ extra_platform_name }}-internal"
+
+- name: GET Subnet internal
+  delegate_to: localhost
+  azure_rm_subnet_info:
+    resource_group: "rg-{{ extra_platform_name }}"
+    virtual_network_name: "vnet-{{ extra_platform_name }}"
+    name: "net-{{ extra_platform_name }}-internal"
+  register: output_subnet_internal
+
+- name: CREATE Subnet pan_dataplane
+  delegate_to: localhost
+  azure_rm_subnet:
+    resource_group: "rg-{{ extra_platform_name }}"
+    virtual_network: "vnet-{{ extra_platform_name }}"
+    name: "net-{{ extra_platform_name }}-pan_dataplane"
+    address_prefix: "{{ extra_pan_dataplane_subnet_address_prefix }}"
+    security_group_name: "nsg-{{ extra_platform_name }}-trust"
+    route_table: "rt-{{ extra_platform_name }}-pan_dataplane"
+
+- name: GET Subnet pan_dataplane
+  delegate_to: localhost
+  azure_rm_subnet_info:
+    resource_group: "rg-{{ extra_platform_name }}"
+    virtual_network_name: "vnet-{{ extra_platform_name }}"
+    name: "net-{{ extra_platform_name }}-pan_dataplane"
+  register: output_subnet_pan_dataplane
+  
+- name: CREATE Subnet GatewaySubnet
+  delegate_to: localhost
+  azure_rm_subnet:
+    resource_group: "rg-{{ extra_platform_name }}"
+    virtual_network: "vnet-{{ extra_platform_name }}"
+    name: "GatewaySubnet"
+    address_prefix: "{{ extra_gateway_subnet_address_prefix }}"
+
+- name: CREATE Public IP Address for VPN GW
+  delegate_to: localhost
+  azure_rm_publicipaddress:
+    resource_group: "rg-{{ extra_platform_name }}"
+    allocation_method: Dynamic
+    domain_name: "vpngw-{{ extra_platform_name | lower }}"
+    name: "vpngw-{{ extra_platform_name | lower }}"
+    location: "{{ extra_location }}"
+    sku: 'Basic'
+    idle_timeout: 30
+    version: 'ipv4'
+    tags:
+      Name: "vpngw-{{ extra_platform_name | lower }}"
+      owner: "{{ owner }}"
+
+- name: CREATE virtual network gateway
+  delegate_to: localhost
+  azure_rm_virtualnetworkgateway:
+    resource_group: "rg-{{ extra_platform_name }}"
+    name: "vnet_gw-{{ extra_platform_name }}"
+    gateway_type: vpn
+    vpn_type: route_based
+    enable_bgp: false
+    sku: VpnGw1
+    ip_configurations:
+      - name: "vnet_gw_ip-{{ extra_platform_name }}"
+        private_ip_allocation_method: Dynamic
+        public_ip_address_name: "vpngw-{{ extra_platform_name | lower }}"
+        subnet: "GatewaySubnet"
+    virtual_network: "vnet-{{ extra_platform_name }}"
+    tags:
+      Name: "vpngw-{{ extra_platform_name | lower }}"
+      owner: "{{ owner }}"
+
+- name: VRF management - CREATE a route to On Premise management platform
+  delegate_to: localhost
+  azure_rm_route:
+    resource_group: "rg-{{ extra_platform_name }}"
+    route_table_name: "rt-{{ extra_platform_name }}-management"
+    name: 'MGT_on_premise'
+    address_prefix: '{{ extra_subnet_mgt_on_premise }}'
+    next_hop_type: 'virtual_network_gateway'
+
+- name: GET Public IP of VPN GW
+  delegate_to: localhost
+  azure_rm_publicipaddress_facts:
+    resource_group: "rg-{{ extra_platform_name }}"
+    name: "vpngw-{{ extra_platform_name | lower }}"
+  register: facts_public_ip_vpn_gw
+
+- name: SET fact elb_list
+  set_fact:
+    elb_list:
+    - external
+    - outbound-management-vmss-nginx-external
+    - outbound-management-vmss-awaf
+    - outbound-management-vmss-pan
+    - outbound-management-vmss-nginx-internal
+
+- name: CREATE Public IP Address for External ELB
+  delegate_to: localhost
+  azure_rm_publicipaddress:
+    resource_group: "rg-{{ extra_platform_name }}"
+    allocation_method: Static
+    domain_name: "{{ extra_platform_name | lower }}-elb-{{ item }}"
+    name: "{{ extra_platform_name | lower }}-elb-{{ item }}"
+    location: "{{ extra_location }}"
+    sku: 'Standard'
+    idle_timeout: 30
+    version: 'ipv4'
+    tags:
+      Name: "{{ extra_platform_name | lower }}-elb-{{ item }}"
+      owner: "{{ owner }}"
+  loop: "{{ elb_list }}"
+
+- name: CREATE External Load Balancer
+  delegate_to: localhost
+  azure_rm_loadbalancer:
+    resource_group: "rg-{{ extra_platform_name }}"
+    name: "elb-{{ extra_platform_name }}-{{ item }}"
+    location: "{{ extra_location }}"
+    sku: Standard
+    frontend_ip_configurations:
+      - name: "redir-{{ extra_platform_name }}-{{ item }}"
+        public_ip_address: "{{ extra_platform_name }}-elb-{{ item }}"
+    backend_address_pools:
+      - name: "pool-{{ extra_platform_name }}-{{ item }}"
+    probes:
+      - name: "hc-http-local"
+        port: 80
+        protocol: Http
+        request_path: '/'
+        interval: 5
+        fail_count: 2
+    load_balancing_rules:
+      - name: "rule-{{ extra_platform_name }}-{{ item }}"
+        frontend_ip_configuration: "redir-{{ extra_platform_name }}-{{ item }}"
+        backend_address_pool: "pool-{{ extra_platform_name }}-{{ item }}"
+        protocol: Tcp
+        load_distribution: SourceIP
+        frontend_port: 443
+        backend_port: 443
+        probe: "hc-http-local"
+  loop: "{{ elb_list }}"
+
+- name: CREATE Internal Load Balancer External
+  delegate_to: localhost
+  azure_rm_loadbalancer:
+    resource_group: "rg-{{ extra_platform_name }}"
+    name: "ilb-{{ extra_platform_name }}-external"
+    location: "{{ extra_location }}"
+    sku: Standard
+    frontend_ip_configurations:
+      - name: "redir-{{ extra_platform_name }}-external"
+        private_ip_address: "{{ extra_lb_external_vip }}"
+        private_ip_allocation_method: Static
+        subnet: "{{ output_subnet_external.subnets[0].id }}"
+    backend_address_pools:
+      - name: "pool-{{ extra_platform_name }}-external"
+    probes:
+      - name: "hc-tcp-443"
+        port: 443
+        protocol: Tcp
+        interval: 5
+        fail_count: 2
+    load_balancing_rules:
+      - name: "rule-{{ extra_platform_name }}-external"
+        frontend_ip_configuration: "redir-{{ extra_platform_name }}-external"
+        backend_address_pool: "pool-{{ extra_platform_name }}-external"
+        protocol: All
+        load_distribution: Default
+        frontend_port: 0
+        backend_port: 0
+        probe: "hc-tcp-443"
+
+- name: CREATE Internal Load Balancer PAN
+  delegate_to: localhost
+  azure_rm_loadbalancer:
+    resource_group: "rg-{{ extra_platform_name }}"
+    name: "ilb-{{ extra_platform_name }}-pan_dataplane"
+    location: "{{ extra_location }}"
+    sku: Standard
+    frontend_ip_configurations:
+      - name: "redir-{{ extra_platform_name }}-pan_dataplane"
+        private_ip_address: "{{ extra_lb_pan_vip }}"
+        private_ip_allocation_method: Static
+        subnet: "{{ output_subnet_pan_dataplane.subnets[0].id }}"
+    backend_address_pools:
+      - name: "pool-{{ extra_platform_name }}-pan_dataplane"
+    probes:
+      - name: "hc-tcp-443"
+        port: 443
+        protocol: Tcp
+        interval: 5
+        fail_count: 2
+    load_balancing_rules:
+      - name: "rule-{{ extra_platform_name }}-pan_dataplane"
+        frontend_ip_configuration: "redir-{{ extra_platform_name }}-pan_dataplane"
+        backend_address_pool: "pool-{{ extra_platform_name }}-pan_dataplane"
+        protocol: All
+        load_distribution: Default
+        frontend_port: 0
+        backend_port: 0
+        probe: "hc-tcp-443"
+
+- name: CREATE Internal Load Balancer Internal
+  delegate_to: localhost
+  azure_rm_loadbalancer:
+    resource_group: "rg-{{ extra_platform_name }}"
+    name: "ilb-{{ extra_platform_name }}-internal"
+    location: "{{ extra_location }}"
+    sku: Standard
+    frontend_ip_configurations:
+      - name: "redir-{{ extra_platform_name }}-internal"
+        private_ip_address: "{{ extra_lb_internal_vip }}"
+        private_ip_allocation_method: Static
+        subnet: "{{ output_subnet_internal.subnets[0].id }}"
+    backend_address_pools:
+      - name: "pool-{{ extra_platform_name }}-internal"
+    probes:
+      - name: "hc-http-local"
+        port: 80
+        protocol: Http
+        request_path: '/'
+        interval: 5
+        fail_count: 2
+    load_balancing_rules:
+      - name: "rule-{{ extra_platform_name }}-internal"
+        frontend_ip_configuration: "redir-{{ extra_platform_name }}-internal"
+        backend_address_pool: "pool-{{ extra_platform_name }}-internal"
+        protocol: All
+        load_distribution: Default
+        frontend_port: 0
+        backend_port: 0
+        probe: "hc-http-local"
+
+- name: VRF NGINX - CREATE route to VIP via ILB AWAF
+  delegate_to: localhost
+  azure_rm_route:
+    resource_group: "rg-{{ extra_platform_name }}"
+    route_table_name: "rt-{{ extra_platform_name }}-nginx"
+    name: "redir-vip-to-AWAF"
+    address_prefix: '{{ item }}'
+    next_hop_type: 'virtual_appliance'
+    next_hop_ip_address: '{{ extra_lb_external_vip }}'
+  loop: "{{ extra_vip_address_list_awaf }}"
+
+- name: VRF external - CREATE route to VIP via ILB PAN
+  delegate_to: localhost
+  azure_rm_route:
+    resource_group: "rg-{{ extra_platform_name }}"
+    route_table_name: "rt-{{ extra_platform_name }}-external"
+    name: "redir-vip-to-PAN"
+    address_prefix: '{{ item }}'
+    next_hop_type: 'virtual_appliance'
+    next_hop_ip_address: '{{ extra_lb_pan_vip }}'
+  loop: "{{ extra_vip_address_list_nginx_second_line }}"
+
+- name: VRF external - CREATE route to ILB NGINX via ILB PAN
+  delegate_to: localhost
+  azure_rm_route:
+    resource_group: "rg-{{ extra_platform_name }}"
+    route_table_name: "rt-{{ extra_platform_name }}-external"
+    name: "redir-ilb-nginx-to-PAN"
+    address_prefix: '{{ extra_lb_internal_vip }}/32'
+    next_hop_type: 'virtual_appliance'
+    next_hop_ip_address: '{{ extra_lb_pan_vip }}'
+
+- name: VRF pan_dataplane - CREATE route to VIP via ILB NGINX
+  delegate_to: localhost
+  azure_rm_route:
+    resource_group: "rg-{{ extra_platform_name }}"
+    route_table_name: "rt-{{ extra_platform_name }}-pan_dataplane"
+    name: "redir-vip-to-NGINX_internal"
+    address_prefix: '{{ item }}'
+    next_hop_type: 'virtual_appliance'
+    next_hop_ip_address: '{{ extra_lb_internal_vip }}'
+  loop: "{{ extra_vip_address_list_nginx_second_line }}"
+
+- name: VRF internal - CREATE default route to subnet_AWAF via ILB PAN
+  delegate_to: localhost
+  azure_rm_route:
+    resource_group: "rg-{{ extra_platform_name }}"
+    route_table_name: "rt-{{ extra_platform_name }}-internal"
+    name: "redir-AWAF_subnet-to-PAN"
+    address_prefix: '{{ extra_external_subnet_address_prefix }}'
+    next_hop_type: 'virtual_appliance'
+    next_hop_ip_address: '{{ extra_lb_pan_vip }}'
+
+- name: CMP_OUTPUT
+  debug:
+    msg: "
+    key=vpn_gw_ip;value={{ facts_public_ip_vpn_gw.ansible_facts.azure_publicipaddresses[0].properties.ipAddress }};help=Your Azure VPN GW IP;
+    key=ike_encryption;value=aes256;help=VirtualNetworkGatewayConnections;
+    key=ike_hash;value=sha256;help=VirtualNetworkGatewayConnections;
+    key=ike_dh;value=group2;help=VirtualNetworkGatewayConnections;
+    key=esp_encryption;value=aes192;help=VirtualNetworkGatewayConnections;
+    key=esp_hash;value=sha256;help=VirtualNetworkGatewayConnections;
+    key=pfs;value=none;help=VirtualNetworkGatewayConnections;
+    key=ike_lifetime (second);value=28800;help=VirtualNetworkGatewayConnections;
+    key=esp_lifetime (second);value=27000;help=VirtualNetworkGatewayConnections;
+    "
+
+
+
+
+
+
+
+
+
+
+
+...

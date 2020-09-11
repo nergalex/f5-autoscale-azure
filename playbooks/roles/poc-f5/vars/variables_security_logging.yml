@@ -1,0 +1,11 @@
+--- 
+#bigip direct
+extra_ip_mgt: 52.143.163.174
+extra_port_mgt: 8443
+extra_admin_user: admin
+extra_admin_password: F5N3tworks
+
+
+extra_template: template_security_logging.jinja2
+extra_dcd_ip: 10.0.0.16
+extra_dcd_port: 8514

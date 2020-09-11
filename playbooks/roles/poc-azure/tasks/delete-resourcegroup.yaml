@@ -1,0 +1,9 @@
+---
+- name: Delete Resouce Group
+  delegate_to: localhost
+  azure_rm_resourcegroup:
+    name: "rg-{{ extra_platform_name }}"
+    state: absent
+    force: yes
+
+...

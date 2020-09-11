@@ -1,0 +1,58 @@
+---
+- name: login - retrieve CS ACCESS_TOKEN + REFRESH_TOKEN
+  uri:
+    url: "https://{{ extra_cs_hostname }}/{{ extra_cs_api_version }}/svc-auth/login"
+    method: POST
+    headers:
+      Content-Type: application/json
+    body: "{{ lookup('template','cs_login.json') }}"
+    body_format: json
+    timeout: 60
+    status_code: 200, 202
+    validate_certs: false
+  register: cs_login
+
+- name: Account details - retrieve CS ACCOUNT_ID
+  uri:
+    url: "https://{{ extra_cs_hostname }}/{{ extra_cs_api_version }}/svc-account/user"
+    method: GET
+    headers:
+        Accept: application/json
+        Authorization: "Bearer {{cs_login.json.access_token}}"
+    timeout: 60
+    status_code: 200, 202
+    validate_certs: false
+  register: cs_account
+
+- name: Create Beacon-Tokens
+  uri:
+    url: "https://{{ extra_cs_hostname }}/beacon/v1/telemetry-token"
+    method: POST
+    headers:
+      Content-Type: application/json
+      Authorization: "Bearer {{cs_login.json.access_token}}"
+      X-F5aas-Preferred-Account-Id: "{{cs_account.json.primary_account_id}}"
+    body: "{{ lookup('template', 'cs_beacon_token_create.json') }}"
+    body_format: json
+    timeout: 60
+    status_code: 200, 202
+    validate_certs: false
+  register: cs_beacon_token
+
+- name: BIG-IP - configure Telemetry Streaming
+  uri:
+    url: "https://{{ extra_ip_mgt }}/mgmt/shared/telemetry/declare"
+    method: "POST"
+    user: "admin"
+    password: "{{ extra_admin_password }}"
+    validate_certs: no
+    body: "{{ lookup('template', 'beacon-ts-configure.json') }}"
+    body_format: json
+    timeout: 300
+    status_code: 200, 202
+
+
+
+
+
+...

@@ -1,0 +1,4 @@
+---
+- name: Generate certificate
+  include_role:
+    name: openssl_cert

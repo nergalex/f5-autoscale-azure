@@ -1,0 +1,99 @@
+---
+- name: CREATE a container instance
+  delegate_to: localhost
+  azure_rm_containerinstance:
+    resource_group: "rg-{{ extra_spokeplatform_name }}"
+    name: "{{ extra_vmss_name }}"
+    os_type: "linux"
+    dns_name_label: "extra_app_name"
+    location: "{{ extra_location }}"
+        - name: myContainer1
+          image: httpd
+          memory: 1.5
+          ports:
+            - 80
+            - 81
+
+
+    vm_size: "{{ extra_app_vm_size }}"
+    capacity: "{{ extra_vmss_capacity }}"
+    overprovision: true
+    upgrade_policy: "Manual"
+    tags: "{{ extra_platform_tags }}
+              Name={{ extra_app_name }}
+              owner={{ owner }}
+              zone={{ extra_app_name }}"
+    admin_username: "{{ app_admin_username }}"
+    ssh_password_enabled: false
+    ssh_public_keys:
+      - path: "/home/{{ app_admin_username }}/.ssh/authorized_keys"
+        key_data: "{{ extra_key_data }}"
+    image:
+      offer: CentOS
+      publisher: OpenLogic
+      sku: '7.5'
+      version: latest
+    managed_disk_type: Standard_LRS
+    os_type: Linux
+    virtual_network_name: "vnet-{{ extra_spokeplatform_name }}"
+    subnet_name: "net-{{ extra_spokeplatform_name }}-{{ extra_zone_name }}"
+  register: output_vmss
+
+- name: CREATE VMSS Extension
+  delegate_to: localhost
+  azure_rm_virtualmachinescalesetextension:
+    resource_group: "rg-{{ extra_spokeplatform_name }}"
+    vmss_name: "{{ extra_vmss_name }}"
+    name: "extension-{{ extra_vmss_name }}"
+    location: "{{ extra_location }}"
+    publisher: 'Microsoft.Azure.Extensions'
+    type: 'CustomScript'
+    type_handler_version: 2.0
+    protected_settings: '{"commandToExecute": "{{ lookup("template", extra_app_backend) }}"}'
+    settings: '{{ extra_extension_file_uri_list }}'
+    auto_upgrade_minor_version: true
+  when: extra_extension_file_uri_list is defined
+
+- name: CREATE VMSS Extension - cmd only
+  delegate_to: localhost
+  azure_rm_virtualmachinescalesetextension:
+    resource_group: "rg-{{ extra_spokeplatform_name }}"
+    vmss_name: "{{ extra_vmss_name }}"
+    name: "extension-{{ extra_vmss_name }}"
+    location: "{{ extra_location }}"
+    publisher: 'Microsoft.Azure.Extensions'
+    type: 'CustomScript'
+    type_handler_version: 2.0
+    protected_settings: '{"commandToExecute": "{{ lookup("template", "hackazon_1nic_bootstrapping.jinja2") }}"}'
+    auto_upgrade_minor_version: true
+  when: extra_extension_file_uri_list is undefined
+
+- name: List VM instances in Virtual Machine ScaleSet
+  delegate_to: localhost
+  azure_rm_virtualmachinescalesetinstance_facts:
+    resource_group: "rg-{{ extra_spokeplatform_name }}"
+    vmss_name: "{{ extra_vmss_name }}"
+  register: output_vmss_instances
+
+- name: Upgrade VMSS instances with Extension
+  delegate_to: localhost
+  azure_rm_virtualmachinescalesetinstance:
+    resource_group: "rg-{{ extra_spokeplatform_name }}"
+    vmss_name: "{{ extra_vmss_name }}"
+    instance_id: "{{ item.instance_id }}"
+    latest_model: true
+  loop: "{{ output_vmss_instances.instances }}"
+  loop_control:
+    index_var: cur_index
+  register: output_vmss_instances_extension
+
+- name: CMP OUTPUT
+  debug:
+    msg: "
+    key={{ item.item.name }} provisioning state;value={{ item.item.provisioning_state }};help=VM #{{ cur_index }} with extension;
+    key={{ item.item.name }} power state;value={{ item.item.power_state }};help=VM #{{ cur_index }} with extension;
+    "
+  loop: "{{ output_vmss_instances_extension.results }}"
+  loop_control:
+    index_var: cur_index
+...

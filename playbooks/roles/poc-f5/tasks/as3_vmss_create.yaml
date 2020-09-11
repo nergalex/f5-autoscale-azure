@@ -1,0 +1,78 @@
+---
+- name: GET Token
+  uri:
+    url: https://{{ item.management }}:{{ extra_port_mgt }}/mgmt/shared/authn/login
+    method: POST
+    headers:
+      Content-Type: application/json
+    body: "{{ lookup('template','bigip_auth.jinja2') }}"
+    body_format: json
+    timeout: 60
+    status_code: 200, 202
+    validate_certs: false
+  loop: "{{ stats_self_ips }}"
+  register: list_auth
+
+- debug:
+    var: list_auth.results
+
+- name: POST AS3
+  uri:
+    url: https://{{ item.0.management }}:{{ extra_port_mgt }}/mgmt/shared/appsvcs/declare?async=true
+    method: POST
+    headers:
+        Content-Type: application/json
+        X-F5-Auth-Token: "{{item.1.json.token.token}}"
+    body: "{{ lookup('template', '{{ extra_as3_template }}') }}"
+    body_format: json
+    timeout: 60
+    status_code: 200, 202
+    validate_certs: false
+  loop: "{{ stats_self_ips|zip(list_auth.results)|list }}"
+  register: list_json_response
+
+- debug:
+    var: list_json_response.results
+
+#######LOOP TO CHECK THE TASK - DO NOT MODIFY BELOW
+
+- name: WAIT for AS3 Deployment IN PROGRESS
+  uri:
+    url: https://{{ item.0.management }}:{{ extra_port_mgt }}/mgmt/shared/appsvcs/task/{{list_json_response.results[cur_index].json.id}}
+    method: GET
+    headers:
+      Content-Type: application/json
+      X-F5-Auth-Token: "{{item.1.json.token.token}}"
+    timeout: 60
+    status_code: 200, 202
+    validate_certs: false
+  register: list_json_response_task_progress
+  until: "list_json_response_task_progress.json.results[0].code == 200"
+  retries: 10
+  delay: 30
+  loop: "{{ stats_self_ips|zip(list_auth.results)|list }}"
+  loop_control:
+    index_var: cur_index
+
+- debug:
+    var: list_json_response_task_progress
+
+- name: CHECK AS3 Deployment SUCCESS
+  uri:
+    url: https://{{ item.0.management }}:{{ extra_port_mgt }}/mgmt/shared/appsvcs/task/{{list_json_response.results[cur_index].json.id}}
+    method: GET
+    headers:
+      Content-Type: application/json
+      X-F5-Auth-Token: "{{item.1.json.token.token}}"
+    timeout: 60
+    status_code: 200
+    validate_certs: false
+  register: list_json_response_task_success
+  loop: "{{ stats_self_ips|zip(list_auth.results)|list }}"
+  loop_control:
+    index_var: cur_index
+
+- debug:
+    var: list_json_response_task_success.results
+
+...

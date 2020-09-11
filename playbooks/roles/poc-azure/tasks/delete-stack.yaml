@@ -1,0 +1,8 @@
+- name: Delete Stack
+  delegate_to: localhost
+  azure_rm_deployment:
+    resource_group: "rg-{{ extra_platform_name }}"
+    deployment_name: "{{ extra_stack_name }}"
+    state: absent
+
+

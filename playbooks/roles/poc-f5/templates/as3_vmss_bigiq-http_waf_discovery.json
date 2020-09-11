@@ -1,0 +1,97 @@
+{
+    "class": "AS3",
+    "persist": true,
+    "declaration": {
+        "class": "ADC",
+        "schemaVersion": "3.12.0",
+        "id": "id_{{ extra_app.name }}",
+        "target": {
+            "address": "{{ item.management }}"
+        },
+        "{{ extra_app.name }}": {
+            "class": "Tenant",
+            "defaultRouteDomain": 0,
+            "{{ extra_app.name }}": {
+                "class": "Application",
+                "template": "http",
+                "statsProfile": {
+                    "class": "Analytics_Profile",
+                    "collectedStatsInternalLogging": true,
+                    "collectedStatsExternalLogging": false,
+                    "capturedTrafficInternalLogging": false,
+                    "capturedTrafficExternalLogging": false,
+                    "collectPageLoadTime": true,
+                    "collectMaxTpsAndThroughput": true,
+                    "collectClientSideStatistics": true,
+                    "collectResponseCode": true,
+                    "collectMethod": true,
+                    "collectOsAndBrowser": true,
+                    "collectUrl": true,
+                    "collectUserAgent": true,
+                    "collectUserSession": true,
+                },
+                "serviceMain": {
+                    "class": "Service_HTTP",
+                    "virtualAddresses": {{ extra_app.vip_subnet_awaf }},
+                    "virtualPort": {{ extra_app.vs_listener_port_http }},
+                    "securityLogProfiles": [
+					    { "bigip": "{{ extra_log_profile }}" }
+					],
+                    "allowVlans": {{ extra_vlans }},
+                    "snat": "auto",
+                    "profileAnalytics": {
+                        "use": "statsProfile"
+                    },
+                    "profileHTTP": {
+                        "use": "profile_http_{{ extra_app.name }}"
+                    },
+                    {% if extra_compression is sameas true or extra_compression == 'true' %}
+                    "profileHTTPCompression": {
+                        "bigip": "/Common/wan-optimized-compression"
+                    },
+                    {% endif %}
+                    "policyWAF": {
+                        "use": "waf_policy_{{ extra_app.name }}"
+                    },
+                    "pool": "pool_{{ extra_app.name }}_{{ extra_pool[0].name }}"
+                },
+                {% for pool in extra_pool %}
+                "pool_{{ extra_app.name }}_{{ pool.name }}": {
+                    "class": "Pool",
+                    "loadBalancingMode" : "{{ pool.loadBalancingMode }}",
+                    "monitors": ["http"],
+                    "members": [
+                        {
+                            "servicePort": {{ pool.servicePort }},
+                            "addressDiscovery": "azure",
+                            "updateInterval": 10,
+                            "tagKey": "{{ pool.tagKey }}",
+                            "tagValue": "{{ pool.tagValue }}",
+                            "addressRealm": "private",
+                            "resourceGroup": "{{ pool.resourceGroup }}",
+                            "subscriptionId": "{{ pool.subscriptionId }}",
+                            "directoryId": "{{ pool.directoryId }}",
+                            "applicationId": "{{ pool.applicationId }}",
+                            "apiAccessKey": "{{ pool.apiAccessKey }}",
+                            "credentialUpdate": false
+                        }
+                    ]
+                },
+                {% endfor %}
+
+                "profile_http_{{ extra_app.name }}": {
+                    "class": "HTTP_Profile",
+                    "xForwardedFor": true,
+                    "proxyType": "reverse",
+                    "requestChunking": "rechunk",
+                    "responseChunking": "rechunk"
+                },
+                "waf_policy_{{ extra_app.name }}" : {
+                    "class": "WAF_Policy",
+                    "url": "{{ extra_waf_policy }}",
+                    "ignoreChanges": true
+                }
+            }
+        }
+    }
+}

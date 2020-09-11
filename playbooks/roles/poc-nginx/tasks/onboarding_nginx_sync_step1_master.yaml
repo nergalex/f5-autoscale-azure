@@ -1,0 +1,59 @@
+---
+- name: CREATE NGINX+ key+crt repo
+  file:
+    path: /etc/ssl/nginx
+    state: directory
+
+- name: COPY NGINX+ key
+  copy:
+    content: "{{ extra_nginx_key }}"
+    dest: "/etc/ssl/nginx/nginx-repo.key"
+    mode: '0400'
+
+- name: COPY NGINX+ crt
+  copy:
+    content: "{{ extra_nginx_crt }}"
+    dest: "/etc/ssl/nginx/nginx-repo.crt"
+    mode: '0400'
+
+- name: INSTALL ca-certificates
+  package:
+    name: ca-certificates
+    state: present
+
+- name: GET NGINX+ repo
+  get_url:
+    url: https://cs.nginx.com/static/files/nginx-plus-7.4.repo
+    dest: /etc/yum.repos.d
+    mode: '0400'
+
+- name: INSTALL nginx-sync
+  package:
+    name: nginx-sync
+    state: present
+
+- name: CREATE ssl private key directory
+  file:
+    path: /root/.ssh
+    state: directory
+
+- name: CREATE ssl private key
+  openssh_keypair:
+    path: /root/.ssh/id_rsa
+    size: 2048
+
+- name: GET ssl private key
+  slurp:
+    src: /root/.ssh/id_rsa.pub
+  register: id_rsa_b64
+
+- debug:
+    msg: 'from="{{ ansible_host }}" {{ id_rsa_b64["content"] | b64decode }}'
+
+- name: "Artifact for Tower Workflows"
+  set_stats:
+    data:
+      stats_master_key:  'from="{{ ansible_host }}" {{ id_rsa_b64["content"] | b64decode }}'
+
+
+...

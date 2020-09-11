@@ -1,0 +1,22 @@
+---
+
+- import_role:
+    name: f5devcentral.f5ansible
+
+- name: Create redirhttps forwarding VS
+  bigip_virtual_server:
+    destination: 0.0.0.0
+    name: redirhttps
+    port: 443
+    type: forwarding-ip
+    state: "{{ extra_state }}"
+    snat: automap
+    enabled_vlans:
+      - /Common/internal
+    provider:
+      user: "{{ extra_admin_user }}"
+      password: "{{ extra_admin_password }}"
+      server: "{{ extra_ip_mgt }}"
+      server_port: "{{ extra_port_mgt }}"
+      validate_certs: no
+  delegate_to: localhost

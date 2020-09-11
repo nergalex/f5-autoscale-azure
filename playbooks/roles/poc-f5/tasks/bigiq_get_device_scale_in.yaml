@@ -1,0 +1,58 @@
+---
+- import_role:
+    name: f5devcentral.f5ansible
+
+- name: INIT list_nodes_current
+  set_fact:
+    list_nodes_current: []
+
+- name: SET list_nodes_current
+  set_fact:
+    list_nodes_current: "{{ list_nodes_current + [item.management] }}"
+  loop: "{{ stats_self_ips }}"
+
+- debug:
+    var: list_nodes_current
+
+- name: GET BIG-IQ info
+  delegate_to: localhost
+  bigiq_device_info:
+    gather_subset:
+      - managed-devices
+    provider:
+      user: "{{ extra_bigiq_admin_user }}"
+      password: "{{ extra_bigiq_admin_password }}"
+      server: "{{ extra_bigiq_ip_mgt }}"
+      server_port: "{{ extra_bigiq_port_mgt }}"
+      validate_certs: no
+  register: var_bigiq_info
+
+- debug:
+    var: var_bigiq_info
+
+- name: INIT list_bigip_to_remove
+  set_fact:
+    list_bigip_to_remove: []
+
+- name: SET list_bigip_to_remove
+  set_fact:
+    list_bigip_to_remove: "{{ list_bigip_to_remove + [ {
+    'instance_id': item.hostname.split('-').1,
+    'hostname': item.hostname,
+    'management': item.management_address
+    } ] }}"
+  loop: "{{ var_bigiq_info.managed_devices }}"
+  when:
+    - item.hostname.split('-').0 == extra_vmss_name
+    - item.hostname.split('-').3.split('.').0 == extra_platform_name
+    - item.hostname.split('.').1 == extra_location
+    - item.management_address not in list_nodes_current
+
+- debug:
+    var: list_bigip_to_remove
+
+- name: "Artifact for Tower Workflows"
+  set_stats:
+    data:
+      stats_list_bigip_to_remove:  "{{ list_bigip_to_remove }}"
+...

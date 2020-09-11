@@ -1,0 +1,38 @@
+---
+- hosts: localhost
+  gather_facts: no
+  tasks:
+  - name: CREATE ansible-playbook in-memory inventory
+    add_host:
+      groups: "vmss-from-workflow"
+      hostname: "{{ extra_vmss_name }}-{{ item.instance_id }}"
+      ansible_host: "{{ item.management }}"
+      ansible_port: 22
+    loop: "{{ stats_self_ips }}"
+    # https://docs.ansible.com/ansible/latest/user_guide/intro_inventory.html#intro-inventory
+    # https://docs.microsoft.com/en-us/azure/developer/ansible/vm-scale-set-deploy-app
+
+- hosts: vmss-from-workflow
+  gather_facts: yes
+  become: true
+  roles:
+    - { role: nginxinc.nginx }
+  vars:
+    nginx_type: plus
+    nginx_version: -20-1.el7.ngx
+    nginx_start: true
+    nginx_license:
+      certificate: "license/nginx-repo.crt"
+      key: "license/nginx-repo.key"
+    nginx_delete_license: false
+
+    nginx_cleanup_config: true
+    nginx_cleanup_config_path:
+      - /etc/nginx/conf.d/default.conf
+    nginx_rest_api_enable: true
+    nginx_rest_api_src: http/api.conf.j2
+    nginx_rest_api_location: /etc/nginx/conf.d/api.conf
+    nginx_rest_api_port: "{{ ansible_host }}:8080"
+    nginx_rest_api_write: true
+    nginx_rest_api_dashboard: true
+

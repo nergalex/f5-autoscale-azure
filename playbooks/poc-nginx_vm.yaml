@@ -1,0 +1,25 @@
+---
+- hosts: localhost
+  gather_facts: no
+  tasks:
+  - name: CREATE ansible-playbook in-memory inventory
+    add_host:
+      groups: "vm-webhook"
+      hostname: "{{ extra_vm_name }}"
+      ansible_host: "{{ extra_vm_ip_mgt }}"
+      ansible_port: 22
+
+- hosts: vm-webhook
+  gather_facts: no
+  become: true
+  roles:
+    - role: poc-nginx
+
+
+
+
+
+
+
+
+

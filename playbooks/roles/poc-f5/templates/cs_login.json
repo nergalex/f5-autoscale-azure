@@ -1,0 +1,4 @@
+{
+    "username": "{{ extra_cs_username }}",
+    "password": "{{ extra_cs_password }}",
+}

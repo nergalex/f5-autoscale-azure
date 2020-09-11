@@ -1,0 +1,14 @@
+{
+    "class": "AS3",
+    "declaration": {
+        "class": "ADC",
+        "schemaVersion": "3.12.0",
+        "id": "id_{{ extra_app_name }}",
+        "target": {
+            "address": "{{ extra_bigip_target }}"
+        },
+        "{{ extra_app_name }}": {
+            "class": "Tenant"
+        }
+    }
+}

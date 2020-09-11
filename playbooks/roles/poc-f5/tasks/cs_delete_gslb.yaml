@@ -1,0 +1,58 @@
+---
+- name: login - retrieve CS ACCESS_TOKEN + REFRESH_TOKEN
+  uri:
+    url: "https://{{ extra_cs_hostname }}/{{ extra_cs_api_version }}/svc-auth/login"
+    method: POST
+    headers:
+      Content-Type: application/json
+    body: "{{ lookup('template','cs_login.json') }}"
+    body_format: json
+    timeout: 60
+    status_code: 200, 202
+    validate_certs: false
+  register: cs_login
+
+- name: Account details - retrieve CS ACCOUNT_ID
+  uri:
+    url: "https://{{ extra_cs_hostname }}/{{ extra_cs_api_version }}/svc-account/user"
+    method: GET
+    headers:
+        Accept: application/json
+        Authorization: "Bearer {{ cs_login.json.access_token }}"
+    timeout: 60
+    status_code: 200, 202
+    validate_certs: false
+  register: cs_account
+
+- name: GET GSLB status
+  uri:
+    url: "https://{{ extra_cs_hostname }}/{{ extra_cs_api_version }}/svc-subscription/subscriptions/{{ extra_subscription_id }}/status"
+    method: GET
+    headers:
+      Content-Type: application/json
+      Authorization: "Bearer {{ cs_login.json.access_token }}"
+    timeout: 60
+    status_code: 200, 202
+    validate_certs: false
+  register: cs_delete
+  delay: 15
+
+- name: DELETE GSLB Subscription
+  uri:
+    url: "https://{{ extra_cs_hostname }}/{{ extra_cs_api_version }}/svc-subscription/subscriptions/{{ extra_subscription_id }}/retire"
+    method: POST
+    headers:
+      Content-Type: application/json
+      Authorization: "Bearer {{cs_login.json.access_token}}"
+    timeout: 60
+    status_code: 200, 202
+    validate_certs: false
+  register: cs_delete
+
+- debug:
+    var: cs_delete.json
+
+
+
+
+...

@@ -1,0 +1,75 @@
+---
+- name: CREATE Public IP Address for Management NIC
+  delegate_to: localhost
+  azure_rm_publicipaddress:
+    resource_group: "rg-{{ extra_platform_name }}"
+    allocation_method: Static
+    domain_name: "webhook-{{ extra_vm_name }}"
+    name: "webhook-{{ extra_vm_name }}"
+    location: "{{ extra_location }}"
+    sku: 'Standard'
+    idle_timeout: 30
+    version: 'ipv4'
+    tags:
+      Name: "management-{{ extra_platform_tags }}-{{ extra_vm_name }}"
+  register: output_ip_address
+
+- name: CREATE vNIC Management
+  delegate_to: localhost
+  azure_rm_networkinterface:
+    resource_group: "rg-{{ extra_platform_name }}"
+    name: "nic-{{ extra_platform_name }}-{{ extra_vm_name }}-management"
+    location: "{{ extra_location }}"
+    virtual_network: "vnet-{{ extra_platform_name }}"
+    subnet_name: "net-{{ extra_platform_name }}-management"
+    create_with_security_group: false
+    tags: "{{ extra_platform_tags }}
+    Name=nic-{{ extra_platform_name }}-{{ extra_vm_name }}-management"
+    ip_configurations:
+      - name: mgt
+        private_ip_address: "{{ extra_vm_ip_mgt }}"
+        private_ip_allocation_method: 'Static'
+        primary: true
+        public_ip_address_name: "webhook-{{ extra_vm_name }}"
+
+- name: CREATE VM
+  delegate_to: localhost
+  azure_rm_virtualmachine:
+    resource_group: "rg-{{ extra_platform_name }}"
+    name: "{{ extra_vm_name }}"
+    location: "{{ extra_location }}"
+    short_hostname: "{{ extra_vm_name }}"
+    vm_size: "{{ extra_vm_size }}"
+    os_disk_size_gb: 128
+    tags: "{{ extra_platform_tags }}
+              Name={{ extra_vm_name }}"
+    admin_username: "{{ infra_admin_username }}"
+    ssh_password_enabled: false
+    ssh_public_keys:
+      - path: "/home/{{ infra_admin_username }}/.ssh/authorized_keys"
+        key_data: "{{ extra_key_data }}"
+    image:
+      offer: "CentOS"
+      publisher: "OpenLogic"
+      sku: "7.4"
+      version: "latest"
+    managed_disk_type: Premium_LRS
+    os_type: Linux
+    network_interface_names:
+      - "nic-{{ extra_platform_name }}-{{ extra_vm_name }}-management"
+    zones: '{{ extra_availability_zone }}'
+
+- name: CMP_OUTPUT
+  debug:
+    msg: "
+    key=dns_mgt;value=webhook-{{ extra_vm_name }}.{{ extra_location }}.cloudapp.azure.com;help=FQDN for management access;
+    key=ip_webhook;value={{ output_ip_address.state.ip_address }};help=Public IP for webhook access;
+    "
+
+
+
+
+
+
+
+...

@@ -1,0 +1,49 @@
+---
+- name: GET nginx-sync.conf
+  slurp:
+    src: /etc/nginx-sync.conf
+  register: id_rsa_b64
+
+- name: SET var_nginx_conf
+  set_fact:
+    var_nginx_conf: "{{ id_rsa_b64['content'] | b64decode }}"
+
+- debug:
+    msg: "var_nginx_conf={{ var_nginx_conf }}"
+
+- name: SET var_nginx_conf_nodes
+  set_fact:
+    var_nginx_conf_nodes: "{{ var_nginx_conf.split('\"').1 }}"
+
+- debug:
+    msg: "var_nginx_conf_nodes={{ var_nginx_conf_nodes }}"
+
+- name: SET list_nodes_current
+  set_fact:
+    list_nodes_current: "{{ var_nginx_conf_nodes.split(' ') }}"
+
+- debug:
+    msg: "list_nodes_current={{ list_nodes_current }}"
+
+- name: INIT list_nodes_to_onboard
+  set_fact:
+    list_nodes_to_onboard: []
+
+- name: SET list_nodes_to_onboard
+  set_fact:
+    list_nodes_to_onboard: "{{ list_nodes_to_onboard + [item.management] }}"
+  loop: "{{ stats_self_ips }}"
+  when: item.instance_id != '0' and item.management not in list_nodes_current
+
+- debug:
+    msg: "list_nodes_to_onboard={{ list_nodes_to_onboard }}"
+
+- name: "Artifact for Tower Workflows"
+  set_stats:
+    data:
+      stats_list_nodes_current:  "{{ list_nodes_current }}"
+      stats_list_nodes_to_onboard:  "{{ list_nodes_to_onboard }}"
+
+
+
+...

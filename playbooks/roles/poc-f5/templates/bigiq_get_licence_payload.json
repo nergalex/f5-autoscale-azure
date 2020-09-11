@@ -1,0 +1,44 @@
+{
+  "multiStageQueryRequest": {
+    "repeatLastStageUntilTerminated": false,
+    "queryParamsList": [
+      {
+        "description": "aggregation",
+        "managedPipelineWorkerName": "aggregator-pipe",
+        "jsonContext": {
+          "resourceUriPathTail": ""
+        },
+        "pipelineAction": "DATA_RETRIEVAL",
+        "runStageInternally": false,
+        "jsonOutput": {
+          "items": [
+            "https://localhost/mgmt/cm/device/licensing/pool/regkey/licenses"
+          ]
+        }
+      },
+      {
+        "description": "sort",
+        "managedPipelineWorkerName": "sort-pipe",
+        "jsonContext": {
+          "sortParamsList": [
+            {
+              "sortField": "name",
+              "sortOrder": "ASCENDING"
+            }
+          ]
+        }
+      },
+      {
+        "description": "pagination",
+        "managedPipelineWorkerName": "page-pipe",
+        "jsonContext": {
+          "skip": 0,
+          "top": 150
+        },
+        "pipelineAction": "DATA_PROCESSING",
+        "runStageInternally": false
+      }
+    ]
+  },
+  "getOnPostAndTerminate": true
+}

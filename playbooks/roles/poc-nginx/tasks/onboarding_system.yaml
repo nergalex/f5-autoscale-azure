@@ -1,0 +1,30 @@
+---
+- name: CREATE persistent route
+  copy:
+    content: "{{ lookup('template', extra_template_route) }}"
+    dest: "/etc/NetworkManager/dispatcher.d/ifup-local"
+    mode: '0755'
+
+- name: restart network
+  systemd:
+    name: NetworkManager
+    state: restarted
+
+# https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/load_balancer_administration/s1-initial-setup-forwarding-vsa
+- name: SET ability to bind to an IP address that are nonlocal
+  sysctl:
+    name: net.ipv4.ip_nonlocal_bind
+    value: '1'
+    state: present
+
+- name: SET IP forwarding
+  sysctl:
+    name: net.ipv4.ip_forward
+    value: '1'
+    state: present
+
+# https://www.nginx.com/blog/using-nginx-plus-with-selinux/
+- name: DISABLE SE Linux
+  command: "setenforce 0"
+
+...

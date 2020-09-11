@@ -1,0 +1,29 @@
+---
+- hosts: localhost
+  gather_facts: no
+  tasks:
+  - name: CREATE ansible-playbook in-memory inventory
+    add_host:
+      groups: "vmss-from-workflow"
+      hostname: "{{ extra_vmss_name }}-{{ item.instance_id }}"
+      ansible_host: "{{ item.management }}"
+      ansible_port: 22
+    loop: "{{ stats_self_ips }}"
+    when: item.protect_from_scale_in != "True"
+    # https://docs.ansible.com/ansible/latest/user_guide/intro_inventory.html#intro-inventory
+    # https://docs.microsoft.com/en-us/azure/developer/ansible/vm-scale-set-deploy-app
+
+- hosts: vmss-from-workflow
+  gather_facts: no
+  become: true
+  roles:
+    - role: poc-nginx
+
+
+
+
+
+
+
+
+

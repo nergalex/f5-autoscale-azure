@@ -1,0 +1,72 @@
+{
+    "class": "AS3",
+	"persist": true,
+    "declaration": {
+        "class": "ADC",
+        "schemaVersion": "3.7.0",
+		"id": "id_{{ extra_application }}",
+        "target": {
+            "hostname": "{{ extra_bigip_target }}"
+        },
+        "{{ extra_application }}": {
+            "class": "Tenant",
+            "defaultRouteDomain": 0,
+            "APP": {
+                "class": "Application",
+                "template": "http",
+                "statsProfile": {
+                    "class": "Analytics_Profile",
+                    "collectedStatsInternalLogging": true,
+                    "collectedStatsExternalLogging": false,
+                    "capturedTrafficInternalLogging": false,
+                    "capturedTrafficExternalLogging": false,
+                    "collectPageLoadTime": true,
+                    "collectMaxTpsAndThroughput": true,
+                    "collectClientSideStatistics": true,
+                    "collectResponseCode": true,
+                    "collectMethod": true,
+                    "collectOsAndBrowser": true,
+                    "collectUrl": true,
+                    "collectUserAgent": true,
+                    "collectUserSession": true,
+                    "sessionCookieSecurity": "ssl-only"
+                },
+                "serviceMain": {
+                    "class": "Service_HTTP",
+                    "virtualAddresses": [
+                        "{{ extra_vip }}"
+                    ],
+		    "virtualPort": {{ extra_port }},
+					"allowVlans": [
+                    {% set commav = joiner(",") %}
+                    {% for v in extra_vlans %}
+                    {{commav()}} "{{ v }}"
+                    {% endfor %}
+                    ],
+                    "snat": "auto",
+                    "profileAnalytics": {
+                        "use": "statsProfile"
+                    },
+                    "pool": "pool_{{ extra_application }}"
+                    },
+                    "pool_{{ extra_application }}": {
+                        "class": "Pool",
+                        "monitors": [
+                            "http"
+                        ],
+                        "members": [
+                            {
+                                "servicePort": {{ extra_pool.servicePort }},
+                                "serverAddresses": [
+                                {% set comma = joiner(",") %}
+                                {% for ip in extra_pool.members %}
+                                {{comma()}} "{{  ip  }}"
+                                {% endfor %}
+                                ]
+                            }
+                        ]
+                    }
+            }
+        }
+    }
+}

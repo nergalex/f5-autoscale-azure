@@ -1,0 +1,20 @@
+---
+- name: List VM instances in Virtual Machine ScaleSet
+  delegate_to: localhost
+  azure_rm_virtualmachinescalesetinstance_info:
+    resource_group: "rg-{{ extra_platform_name }}"
+    vmss_name: "{{ extra_vmss_name }}"
+  register: list_vmss_instances
+
+- name: SET a Master Virtual Machine
+  delegate_to: localhost
+  azure_rm_virtualmachinescalesetinstance:
+    resource_group: "rg-{{ extra_platform_name }}"
+    vmss_name: "{{ extra_vmss_name }}"
+    instance_id: "{{ list_vmss_instances.instances.0.instance_id }}"
+    protect_from_scale_in: true
+
+- debug:
+    var: list_vmss_instances.instances.0.instance_id
+
+...

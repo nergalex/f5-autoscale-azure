@@ -1,0 +1,20 @@
+---
+- name: BIGIQ revoke
+  uri:
+    url: "https://{{ extra_ip_mgt }}/mgmt/shared/declarative-onboarding"
+    method: "POST"
+    user: "admin"
+    password: "{{ extra_admin_password }}"
+    validate_certs: no
+    body: "{{ lookup('template', 'do-BIGIQ_revoke.json') }}"
+    body_format: json
+    timeout: 300
+    status_code: 200, 202
+  when: extra_licensing == "BIGIQ"
+  register: json_response
+
+- name: CMP_OUTPUT
+  debug:
+    msg: "
+    key=do_log_file;value=/var/log/restnoded/restnoded.log;help=restnoded failure log;
+    "

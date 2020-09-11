@@ -1,0 +1,9 @@
+--- 
+extra_bigip_target: xbif5.lab
+extra_ip_mgt: 212.121.177.199
+extra_port_mgt: 10443
+extra_admin_user: admin
+extra_admin_password: F5N3tworks
+extra_template: template_init_bigiq.jinja2
+extra_tenant: tenant_POC_BT1
+extra_init_vip: 10.42.1.10

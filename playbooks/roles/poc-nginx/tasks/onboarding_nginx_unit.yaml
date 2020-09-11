@@ -1,0 +1,29 @@
+---
+# https://unit.nginx.org/installation/#centos
+- name: COPY NGINX+ key
+  copy:
+    content: "{{ lookup('template', 'unit_repo.conf') }}"
+    dest: /etc/yum.repos.d/unit.repo
+
+- name: INSTALL unit
+  package:
+    name:
+      - git
+      - unit
+      - unit-python36
+    state: present
+
+- name: CREATE webhook app directoty
+  file:
+    path: /etc/webhook-app
+    state: directory
+
+- git:
+    repo: 'https://github.com/nergalex/webhook_public.git'
+    dest: /etc/webhook-app
+
+- name: Prepare Unit configuration
+  command: "curl --unix-socket /var/run/unit/control.sock http://localhost/config/ > /etc/webhook-app/config.json"
+
+
+...

@@ -1,0 +1,75 @@
+{
+  "schemaVersion": "1.9.0",
+  "class": "Device",
+  "async": true,
+  "label": "do-standalone-2nic-awaf-BIGIQ",
+  "Common": {
+    "class": "Tenant",
+    "hostname": "{{ extra_vmss_name }}-{{ item.instance_id }}-mgt-{{ extra_platform_name }}.{{ extra_location }}.cloudapp.azure.com",
+    "dbvars": {
+      "class": "DbVariables",
+      "ui.advisory.enabled": true,
+      "ui.advisory.color": "green",
+      "ui.advisory.text": "{{ extra_project_name }}-{{ extra_vmss_name }}-{{ item.instance_id }}"
+    },
+    "local_licence": {
+      "class": "License",
+        "licenseType": "licensePool",
+        "bigIqHost": "{{ extra_bigiq_ip_mgt }}",
+        "bigIqUsername": "{{ extra_bigiq_admin_user }}",
+        "bigIqPassword": "{{ extra_bigiq_admin_password }}",
+        "licensePool": "{{ extra_project_name }}-{{ extra_vmss_name }}",
+        "bigIpUsername": "{{ extra_admin_user }}",
+        "bigIpPassword": "{{ extra_admin_password }}"
+    },
+    "provisioning_awaf": {
+         "class": "Provision",
+         "asm": "nominal",
+         "apm": "nominal",
+         "avr": "nominal"
+    },
+    "ntp_france": {
+      "class": "NTP",
+      "servers": [
+        "0.pool.ntp.org"
+      ],
+      "timezone": "Europe/Paris"
+    },
+    "external": {
+      "class": "VLAN",
+      "mtu": 1500,
+      "tag": 4094,
+      "interfaces": [
+        {
+          "name": "1.1",
+          "tagged": false
+        }
+      ]
+    },
+    "self_static_external": {
+      "class": "SelfIp",
+      "address": "{{ item.dataplane }}/{{ extra_dataplane_subnet_address_mask }}",
+      "trafficGroup": "traffic-group-local-only",
+      "vlan": "external",
+      "allowService": "default"
+    },
+    "route_10": {
+      "class": "Route",
+      "gw": "{{ extra_gw_dataplane }}",
+      "network": "10.0.0.0/8",
+      "mtu": 0
+    },
+    "route_172_16": {
+      "class": "Route",
+      "gw": "{{ extra_gw_dataplane }}",
+      "network": "172.16.0.0/12",
+      "mtu": 0
+    },
+    "route_192_168": {
+      "class": "Route",
+      "gw": "{{ extra_gw_dataplane }}",
+      "network": "192.168.0.0/16",
+      "mtu": 0
+    }
+  }
+}

@@ -1,0 +1,84 @@
+---
+#- name: log AS3 declaration
+#  copy: content="{{ lookup('template', '{{ extra_template }}') }}" dest=as3.log
+-
+- name: Get BIG-IP Token
+  uri:
+    url: "https://{{ extra_ip_mgt }}:{{ extra_port_mgt }}/mgmt/shared/authn/login"
+    method: POST
+    headers:
+      Content-Type: application/json
+    body: "{{ lookup('template','bigip_auth.jinja2') }}"
+    body_format: json
+    timeout: 60
+    status_code: 200, 202
+    validate_certs: false
+  register: auth
+
+- name: POST AS3
+  uri:
+    url: "https://{{ extra_ip_mgt }}:{{ extra_port_mgt }}/mgmt/shared/appsvcs/declare?async=true"
+    method: POST
+    headers:
+        Content-Type: application/json
+        X-F5-Auth-Token: "{{auth.json.token.token}}"
+    body: "{{ lookup('template', '{{ extra_template }}') }}"
+    body_format: json
+    timeout: 60
+    status_code: 200, 202
+    validate_certs: false
+  register: json_response
+
+- debug:
+    var: json_response.json
+
+#######LOOP TO CHECK THE TASK - DO NOT MODIFY BELOW
+
+- name: Check AS3 Deployment Task IN PROGRESS
+  uri:
+    url: https://{{ extra_ip_mgt }}:{{ extra_port_mgt }}/mgmt/shared/appsvcs/task/{{json_response.json.id}}
+    method: GET
+    headers:
+      Content-Type: application/json
+      X-F5-Auth-Token: "{{auth.json.token.token}}"
+    timeout: 60
+    status_code: 200, 202
+    validate_certs: false
+  register: json_response_task
+
+- debug:
+    var: json_response_task.json
+
+- name: Check AS3 Deployment IN PROGRESS loop
+  uri:
+    url: https://{{ extra_ip_mgt }}:{{ extra_port_mgt }}/mgmt/shared/appsvcs/task/{{json_response.json.id}}
+    method: GET
+    headers:
+      Content-Type: application/json
+      X-F5-Auth-Token: "{{auth.json.token.token}}"
+    timeout: 60
+    status_code: 200, 202
+    validate_certs: false
+  register: json_response_task
+  until: "json_response_task.json.results[0].code == 200"
+  retries: 10
+  delay: 30
+
+- debug:
+    var: json_response_task.json
+
+- name: Check AS3 Deployment SUCCESS
+  uri:
+    url: https://{{ extra_ip_mgt }}:{{ extra_port_mgt }}/mgmt/shared/appsvcs/task/{{json_response.json.id}}
+    method: GET
+    headers:
+      Content-Type: application/json
+      X-F5-Auth-Token: "{{auth.json.token.token}}"
+    timeout: 60
+    status_code: 200
+    validate_certs: false
+  register: json_response_task
+
+- debug:
+    var: json_response_task.json
+...

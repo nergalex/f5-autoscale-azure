@@ -1,0 +1,9 @@
+---
+- name: DELETE a virtual machine scale set
+  delegate_to: localhost
+  azure_rm_virtualmachinescaleset:
+    resource_group: "rg-{{ extra_spokeplatform_name }}"
+    name: "{{ extra_vmss_name }}"
+    location: "{{ extra_location }}"
+    state: absent
+...

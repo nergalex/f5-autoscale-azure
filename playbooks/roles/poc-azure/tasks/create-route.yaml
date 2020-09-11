@@ -1,0 +1,12 @@
+---
+- name: Add route via internal LB
+  delegate_to: localhost
+  azure_rm_route:
+    resource_group: "rg-{{ extra_platform_name }}"
+    route_table_name: "rt-{{ extra_platform_name }}-{{ extra_subnet_shortname }}"
+    name: 'default_adc'
+    address_prefix: '{{ extra_address_prefix }}'
+    next_hop_type: 'virtual_appliance'
+    next_hop_ip_address: '{{ extra_ip_internal_lb }}'
+  when: extra_route_type == 'route_via_internal_lb'
+

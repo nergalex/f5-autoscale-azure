@@ -1,0 +1,10 @@
+--- 
+# bigiq
+extra_ip_mgt: 212.121.177.199
+extra_port_mgt: 10443
+extra_admin_user: admin
+extra_admin_password: F5N3tworks
+
+# bigip
+extra_bigip_target: bigip3.lab
+extra_tenant: myapp2

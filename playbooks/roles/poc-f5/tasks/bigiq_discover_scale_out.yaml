@@ -1,0 +1,39 @@
+---
+- import_role:
+    name: f5devcentral.f5ansible
+
+- name: Discover Master and new Slaves
+  delegate_to: localhost
+  bigiq_device_discovery:
+    state: present
+    device_address: "{{ item.management }}"
+    device_port: "{{ extra_port_mgt }}"
+    device_username: "{{ extra_admin_user }}"
+    device_password: "{{ extra_admin_password }}"
+    modules: "{{ extra_device_modules }}"
+    conflict_policy: use_bigiq
+    versioned_conflict_policy: use_bigiq
+    device_conflict_policy: use_bigiq
+    statistics:
+      enable: yes
+    force: yes
+    use_bigiq_sync: yes
+    ha_name: "failoverGroup-{{ extra_vmss_name }}"
+    provider:
+      user: "{{ extra_bigiq_admin_user }}"
+      password: "{{ extra_bigiq_admin_password }}"
+      server: "{{ extra_bigiq_ip_mgt }}"
+      server_port: "{{ extra_bigiq_port_mgt }}"
+      validate_certs: no
+  loop: "{{ stats_self_ips }}"
+  when: item.dataplane in stats_list_nodes_to_onboard or item.protect_from_scale_in == "True"
+
+
+
+
+
+
+
+
+
+...

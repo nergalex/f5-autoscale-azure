@@ -1,0 +1,60 @@
+---
+- name: Create a management route
+  delegate_to: localhost
+  bigip_management_route:
+    name: route_management_on_premise
+    gateway: "{{ extra_gw_management }}"
+    network: "{{ extra_route_prefix_on_premise }}"
+    state: present
+    provider:
+      user: "{{ extra_admin_user }}"
+      password: "{{ extra_admin_password }}"
+      server: "{{ extra_ip_mgt }}"
+      server_port: "{{ extra_port_mgt }}"
+      validate_certs: no
+
+- name: onboarding SSLO - BIGIP - cluster config - master node
+  uri:
+    url: "https://{{ extra_ip_mgt }}/mgmt/shared/declarative-onboarding"
+    method: "POST"
+    user: "admin"
+    password: "{{ extra_admin_password }}"
+    validate_certs: no
+    body: "{{ lookup('template', 'do-sslo_pan-3nic-failover_master-BIGIQ.json') }}"
+    body_format: json
+    timeout: 300
+    status_code: 200, 202
+  when: extra_node_role == "master" and extra_licensing == "BIGIQ"
+  register: json_response
+
+- name: onboarding SSLO - BIGIP - cluster config - master node
+  uri:
+    url: "https://{{ extra_ip_mgt }}/mgmt/shared/declarative-onboarding"
+    method: "POST"
+    user: "admin"
+    password: "{{ extra_admin_password }}"
+    validate_certs: no
+    body: "{{ lookup('template', 'do-sslo_pan-3nic-failover_backup-BIGIQ.json') }}"
+    body_format: json
+    timeout: 300
+    status_code: 200, 202
+  when: extra_node_role == "backup" and extra_licensing == "BIGIQ"
+  register: json_response
+
+- name: CMP_OUTPUT
+  debug:
+    msg: "
+    key=do_log_file;value=/var/log/restnoded/restnoded.log;help=restnoded failure log;
+    "
+#######LOOP TO CHECK THE TASK - DO NOT MODIFY BELOW
+
+- debug:
+    var: json_response
+
+- pause:
+    prompt: "Please wait during f5 big-ip reboot"
+    minutes: 10
+
+
+
+...

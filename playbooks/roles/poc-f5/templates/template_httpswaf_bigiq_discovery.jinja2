@@ -1,0 +1,117 @@
+{
+    "class": "AS3",
+    "persist": true,
+    "declaration": {
+        "class": "ADC",
+        "schemaVersion": "3.7.0",
+        "id": "id_{{ extra_application }}",
+        "target": {
+            "hostname": "{{ extra_bigip_target }}"
+        },
+        "{{ extra_application }}": {
+            "class": "Tenant",
+            "defaultRouteDomain": 0,
+            "APP": {
+                "class": "Application",
+                "template": "https",
+                "statsProfile": {
+                    "class": "Analytics_Profile",
+                    "collectedStatsInternalLogging": true,
+                    "collectedStatsExternalLogging": false,
+                    "capturedTrafficInternalLogging": false,
+                    "capturedTrafficExternalLogging": false,
+                    "collectPageLoadTime": true,
+                    "collectMaxTpsAndThroughput": true,
+                    "collectClientSideStatistics": true,
+                    "collectResponseCode": true,
+                    "collectMethod": true,
+                    "collectOsAndBrowser": true,
+                    "collectUrl": true,
+                    "collectUserAgent": true,
+                    "collectUserSession": true,
+                    "sessionCookieSecurity": "ssl-only"
+                },
+                "serviceMain": {
+                    "class": "Service_HTTPS",
+                    "virtualAddresses": [
+                        "{{ extra_vip }}"
+                    ],
+                    "virtualPort": {{ extra_port }},
+                    "redirect80": false,
+                    "securityLogProfiles": [
+					    { "bigip": "{{ extra_log_profile }}" } 
+					],
+                    "allowVlans": [
+                    {% set commav = joiner(",") %}
+                    {% for v in extra_vlans %}
+                    {{commav()}} "{{ v }}"
+                    {% endfor %}
+                    ],
+                    "snat": "auto",
+                    "profileAnalytics": {
+                        "use": "statsProfile"
+                    },
+                    "profileHTTP": {
+                        "use": "profile_http_{{ extra_application }}"
+                    },
+                    {% if extra_compression %}
+                    "profileHTTPCompression": {
+                        "bigip": "/Common/wan-optimized-compression"
+                    },
+                    {% endif %}
+                    "serverTLS": "csssl_profile_{{ extra_application }}",
+                    "policyWAF": {
+                        "use": "waf_policy_{{ extra_application }}"
+                    },
+                    "pool": "pool_{{ extra_application }}_{{ extra_pool[0].name }}"
+                    },
+
+                    {% for pool in extra_pool %}
+                    "pool_{{ extra_application }}_{{ pool.name }}": {
+                        "class": "Pool",
+                        "loadBalancingMode" : "{{ pool.lbmethod }}",
+                        "monitors": ["http"],
+                        "members": [
+                            {
+                                "servicePort": {{ pool.servicePort }},
+                                "addressDiscovery": "azure",
+                                "updateInterval": 10,
+                                "tagKey": "{{ pool.tagkey }}",
+                                "tagValue": "{{ pool.tagvalue }}",
+                                "addressRealm": "private",
+                                "resourceGroup": "{{ pool.resourcegroup }}",
+                                "subscriptionId": "{{ pool.subscripbtionid }}",
+                                "directoryId": "{{ pool.directoryid }}",
+                                "applicationId": "{{ pool.applicationid }}",
+                                "apiAccessKey": "{{ pool.apikey }}",
+                                "credentialUpdate": false
+                            }
+                        ]
+                    },
+                    {% endfor %}
+
+                    "profile_http_{{ extra_application }}": {
+                        "class": "HTTP_Profile",
+                        "xForwardedFor": true,
+                        "proxyType": "reverse",
+                    },
+                    "csssl_profile_{{ extra_application }}": {
+                        "class": "TLS_Server",
+                        "certificates": [{
+                            "certificate": "ssl_cert_{{ extra_application }}"
+                        }]
+                    },
+                    "ssl_cert_{{ extra_application }}": {
+                        "class": "Certificate",
+                        "certificate": "{{ var_cert }}",
+                        "privateKey": "{{ var_key }}"
+                    },
+                    "waf_policy_{{ extra_application }}" : {
+                        "class": "WAF_Policy",
+                        "url": "{{ extra_waf_policy }}",
+                        "ignoreChanges": true
+                    }
+            }
+        }
+    }
+}

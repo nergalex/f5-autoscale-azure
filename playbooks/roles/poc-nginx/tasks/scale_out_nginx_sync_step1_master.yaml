@@ -1,0 +1,15 @@
+---
+- name: GET ssl private key
+  slurp:
+    src: /root/.ssh/id_rsa.pub
+  register: id_rsa_b64
+
+- debug:
+    msg: 'from="{{ ansible_host }}" {{ id_rsa_b64["content"] | b64decode }}'
+
+- name: "Artifact for Tower Workflows"
+  set_stats:
+    data:
+      stats_master_key:  'from="{{ ansible_host }}" {{ id_rsa_b64["content"] | b64decode }}'
+
+...

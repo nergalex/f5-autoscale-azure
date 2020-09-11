@@ -1,0 +1,5 @@
+{# VAR #}
+{% set install_cmd %}
+yum install -y docker && yum install -y telnet && service docker start && docker pull mutzel/all-in-one-hackazon && docker run --name hackazon -d -p 80:80 mutzel/all-in-one-hackazon:postinstall supervisord -n{% endset %}
+{# RETURN #}
+{{ install_cmd }}

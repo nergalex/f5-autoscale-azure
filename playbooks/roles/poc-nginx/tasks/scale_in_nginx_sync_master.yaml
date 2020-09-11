@@ -1,0 +1,26 @@
+---
+- name: INIT var_sync_nodes
+  set_fact:
+    var_sync_nodes: ""
+
+- name: SET var_sync_nodes
+  set_fact:
+    var_sync_nodes: "{{ var_sync_nodes }} {{ item.management }}"
+  loop: "{{ stats_self_ips }}"
+  when: item.protect_from_scale_in != "True"
+
+- name: SET remove first space in var_sync_nodes
+  set_fact:
+    var_sync_nodes: "{{ var_sync_nodes | regex_replace('^ (.*)$', '\\1') }}"
+  when: var_sync_nodes != ""
+
+- debug:
+    msg: "var_sync_nodes={{ var_sync_nodes }}"
+
+- name: COPY nginx-sync.conf
+  copy:
+    content: "{{ lookup('template', 'nginx-sync.conf') }}"
+    dest: "/etc/nginx-sync.conf"
+    mode: '0600'
+
+...

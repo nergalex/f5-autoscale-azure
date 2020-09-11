@@ -1,0 +1,60 @@
+---
+- name: Create cert passphrase directory
+  file:
+    path: /etc/keys
+    state: directory
+
+- name: COPY Passphrase App
+  copy:
+    content: "{{ extra_passphrase }}"
+    dest: "/etc/keys/passphrase.txt"
+    mode: '0400'
+
+- name: Create key TLS directory
+  file:
+    path: /etc/ssl/private
+    state: directory
+    mode: '0400'
+
+- name: Create cache directory
+  file:
+    path: /data/nginx/cache/
+    state: directory
+
+- name: generate DHparam file
+  become: true
+  shell: openssl dhparam -out /etc/ssl/dhparam.pem 2048
+
+- name: COPY conf nginx.conf
+  copy:
+    content: "{{ lookup('template', extra_template_nginx_conf) }}"
+    dest: "/etc/nginx/nginx.conf"
+
+- name: COPY conf default.conf
+  copy:
+    content: "{{ lookup('template', 'app_monitor.conf') }}"
+    dest: "/etc/nginx/conf.d/default.conf"
+
+- name: COPY log-default.json
+  copy:
+    content: "{{ lookup('template', 'log-default.json') }}"
+    dest: "/etc/nginx/log-default.json"
+
+- name: restart nginx
+  service:
+    name: nginx
+    state: restarted
+
+- name: restart nginx-app-protect
+  service:
+    name: nginx-app-protect
+    state: restarted
+
+- name: reload nginx
+  service:
+    name: nginx
+    state: reloaded
+
+
+
+...

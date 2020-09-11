@@ -1,0 +1,21 @@
+---
+- name: Get ressource groups associated to your project
+  delegate_to: localhost
+  azure_rm_resourcegroup_facts:
+    tags:
+      - "project:{{ extra_project_name }}"
+  register: output_rg_list
+
+- name: Print output_fact
+  debug:
+    msg: "extra_vars: {{ output_rg_list }}."
+
+- name: Delete Resouce Group
+  delegate_to: localhost
+  azure_rm_resourcegroup:
+    name: "{{ item.name }}"
+    state: absent
+    force: yes
+  loop: "{{ output_rg_list.ansible_facts.azure_resourcegroups }}"
+
+...

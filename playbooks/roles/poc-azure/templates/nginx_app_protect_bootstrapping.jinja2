@@ -1,0 +1,11 @@
+{# VAR #}
+{% set manage_route %}
+ip route add {{ extra_route_prefix_on_premise }} via {{ extra_gw_management }} dev eth0\nip route del 0.0.0.0/0 via {{ extra_gw_management }} dev eth0\nip route add 0.0.0.0/0 via {{ extra_gw_dataplane }} dev eth1{% endset %}
+{% set change_file_location %}
+mkdir -p /var/config/nginx_app_protect\ncd /var/lib/waagent/custom-script/download/\ncp `ls -r | head -1`/app-protect-* /var/config/nginx_app_protect\ncp `ls -r | head -1`/installAppProtect.sh /var/config/nginx_app_protect\ncd /var/config/nginx_app_protect{% endset %}
+{% set change_file_permission %}
+chmod u+x installAppProtect.sh{% endset %}
+{% set run_install_script %}
+./installAppProtect.sh app-protect-{{ nginx_rpm_version }}.zip{% endset %}
+{# RETURN #}
+{{ manage_route }}; {{ change_file_location }}; {{ change_file_permission }}; {{ run_install_script }}

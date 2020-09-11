@@ -1,0 +1,105 @@
+---
+- name: List VM instances in Virtual Machine ScaleSet
+  delegate_to: localhost
+  azure_rm_virtualmachinescalesetinstance_info:
+    resource_group: "rg-{{ extra_hub_platform_name }}"
+    vmss_name: "{{ extra_vmss_name_nginx_second_line }}"
+  register: list_vmss_instances
+
+- name: Wait for provisioning_state = Succeeded
+  delegate_to: localhost
+  azure_rm_virtualmachinescalesetinstance_info:
+    resource_group: "rg-{{ extra_hub_platform_name }}"
+    vmss_name: "{{ extra_vmss_name_nginx_second_line }}"
+    instance_id: "{{ item.instance_id }}"
+  loop: "{{ list_vmss_instances.instances }}"
+  register: result
+  until: result.instances.0.provisioning_state == "Succeeded"
+  retries: 2
+  delay: 2
+
+- name: List VM instances in Virtual Machine ScaleSet
+  delegate_to: localhost
+  azure_rm_virtualmachinescalesetinstance_info:
+    resource_group: "rg-{{ extra_hub_platform_name }}"
+    vmss_name: "{{ extra_vmss_name_nginx_second_line }}"
+  register: list_vmss_instances
+
+- name: list_vmss_instances
+  debug:
+    msg: "list_vmss_instances: {{ list_vmss_instances }}
+    "
+
+- name: INIT list_instance_id
+  set_fact:
+    list_instance_id: []
+
+- name: GET VM instance_id
+  set_fact:
+    list_instance_id: "{{ list_instance_id + [ {
+    'instance_id': item.instance_id,
+    'provisioning_state': item.provisioning_state,
+    'protect_from_scale_in': item.protect_from_scale_in
+    } ] }}"
+  loop: "{{ list_vmss_instances.instances }}"
+  register: list_instance_id
+
+- name: SHOW instance_id
+  debug:
+    msg: "instance_id: {{ list_instance_id }}
+    "
+
+- name: GET NIC management
+  delegate_to: localhost
+  azure_rm_networkinterface_vmss_info:
+    resource_group_name: "rg-{{ extra_hub_platform_name }}"
+    virtual_machine_scale_set_name: "{{ extra_vmss_name_nginx_second_line }}"
+    virtualmachine_index: "{{ item.instance_id }}"
+    network_interface_name: "{{ extra_vmss_name_nginx_second_line }}-management"
+  loop: "{{ list_vmss_instances.instances }}"
+  register: list_nic_management
+
+- name: GET NIC dataplane
+  delegate_to: localhost
+  azure_rm_networkinterface_vmss_info:
+    resource_group_name: "rg-{{ extra_hub_platform_name }}"
+    virtual_machine_scale_set_name: "{{ extra_vmss_name_nginx_second_line }}"
+    virtualmachine_index: "{{ item.instance_id }}"
+    network_interface_name: "{{ extra_vmss_name_nginx_second_line }}-dataplane"
+  loop: "{{ list_vmss_instances.instances }}"
+  register: list_nic_dataplane
+
+- name: INIT var
+  set_fact:
+    var_self_ips: []
+
+- name: SET var_self_ips
+  set_fact:
+    var_self_ips: "{{ var_self_ips }} + [{
+      'instance_id': '{{ list_instance_id[cur_index].instance_id }}',
+      'protect_from_scale_in': '{{ list_instance_id[cur_index].protect_from_scale_in }}',
+      'management': '{{ item.0.networkinterfaces[0].ip_configurations[0].private_ip_address }}',
+      'dataplane': '{{  item.1.networkinterfaces[0].ip_configurations[0].private_ip_address }}',
+    }]"
+  loop: "{{ list_nic_management.results|zip(list_nic_dataplane.results)|list }}"
+  loop_control:
+    index_var: cur_index
+
+- name: SHOW var_self_ips
+  debug:
+    msg: "var_self_ips: {{ var_self_ips }}
+    "
+
+- name: "Artifact for Tower Workflows"
+  set_stats:
+    data:
+      stats_self_ips:  "{{ var_self_ips }}"
+
+
+
+
+
+
+
+
+...

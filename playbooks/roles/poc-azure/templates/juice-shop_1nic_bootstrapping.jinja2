@@ -1,0 +1,5 @@
+{# VAR #}
+{% set install_cmd %}
+yum install -y docker && yum install -y telnet && service docker start && docker pull bkimminich/juice-shop && docker run -d --rm -p 80:3000 bkimminich/juice-shop {% endset %}
+{# RETURN #}
+{{ install_cmd }}

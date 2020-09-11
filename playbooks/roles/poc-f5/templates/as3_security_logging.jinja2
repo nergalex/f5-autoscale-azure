@@ -1,0 +1,33 @@
+{
+    "class": "AS3",
+    "persist": true,
+    "declaration": {
+        "class": "ADC",
+        "schemaVersion": "3.11.0",
+        "Common": {
+            "class": "Tenant",
+            "Shared": {
+                "class": "Application",
+                "template": "shared",
+                "asm_log_bigiq": {
+                    "class": "Security_Log_Profile",
+                    "application": {
+                        "storageFilter": {
+                            "requestType": "all"
+                        },
+                        "localStorage": false,
+                        "maxEntryLength": "10k",
+                        "responseLogging": "all",
+                        "protocol": "tcp",
+                        "remoteStorage": "bigiq",
+                        "reportAnomaliesEnabled": true,
+                        "servers": {{ extra_dcd_servers }}
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+

@@ -1,0 +1,58 @@
+{
+  "action": "deploy",
+  "declaration": [
+    {
+      "metadata": {
+        "version": "v1"
+      },
+      "application": {
+        "name": "{{ extra_service_instance_name }}.{{ extra_cs_gslb_zone }}",
+        "description": "GSLB",
+        "labels": {
+          "environment": "{{ extra_environment }}",
+          "project": "{{ extra_project_name }}",
+          "cloud": "Azure",
+          "owner": "CMP CloudBuilder"
+        },
+        "healthSourceSettings": {
+          "metrics": [
+            {
+              "measurementName": "BeaconHealth",
+              "tags": {
+                "name": "www.{{ extra_service_instance_name }}.{{ extra_cs_gslb_zone }}",
+                "source": "GSLB"
+              }
+            }
+          ]
+        },
+        "dependencies": [
+          {%- for app in extra_app_list -%}
+          {
+            "name": "{{ app.name }}",
+            "description": "WAF + LB",
+            "labels": {
+            "environment": "{{ extra_environment }}",
+            "project": "{{ extra_project_name }}",
+            "cloud": "Azure",
+            "owner": "CMP CloudBuilder"
+            },
+            "healthSourceSettings": {
+              "metrics": [
+                {%- for adc_stack_member in app.adc_stack_cluster -%}
+                {
+                  "measurementName": "BeaconHealth",
+                  "tags": {
+                    "name": "/{{ app.name }}/APP/serviceMain",
+                    "source": "{{ adc_stack_member.name }}-mgt-{{ app.platform_name }}.{{ app.location }}.cloudapp.azure.com"
+                  }
+                },{%- if not loop.last -%},{% endif %}
+                {%- endfor -%}
+              ]
+            }
+          },{%- if not loop.last -%},{% endif %}
+          {%- endfor -%}
+        ]
+      }
+    }
+  ]
+}

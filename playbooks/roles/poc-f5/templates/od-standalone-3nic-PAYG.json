@@ -1,0 +1,84 @@
+{
+  "schemaVersion": "1.3.0",
+  "class": "Device",
+  "async": false,
+  "label": "od-standalone-3nic",
+  "Common": {
+    "class": "Tenant",
+    "hostname": "{{ extra_vm_name }}-mgt-{{ extra_platform_name }}.{{ extra_location }}.cloudapp.azure.com",
+    "dbvars": {
+      "class": "DbVariables",
+      "ui.advisory.enabled": true,
+      "ui.advisory.color": "green",
+      "ui.advisory.text": "{{ extra_project_name }}"
+    },
+    "ntp_france": {
+      "class": "NTP",
+      "servers": [
+        "0.pool.ntp.org"
+      ],
+      "timezone": "Europe/Paris"
+    },
+    "external": {
+      "class": "VLAN",
+      "mtu": 1500,
+      "tag": 4094,
+      "interfaces": [
+        {
+          "name": "1.1",
+          "tagged": false
+        }
+      ]
+    },
+    "internal": {
+      "class": "VLAN",
+      "mtu": 1500,
+      "tag": 4093,
+      "interfaces": [
+        {
+          "name": "1.2",
+          "tagged": false
+        }
+      ]
+    },
+    "self_static_internal": {
+        "class": "SelfIp",
+        "address": "{{ extra_ip_int_self_static }}{{ interco_subnet_mask }}",
+        "trafficGroup": "traffic-group-local-only",
+        "vlan": "internal",
+        "allowService": "default"
+    },
+    "self_floating_internal": {
+        "class": "SelfIp",
+        "address": "{{ extra_ip_int_self_floating }}{{ interco_subnet_mask }}",
+        "trafficGroup": "traffic-group-1",
+        "vlan": "internal",
+        "allowService": "default"
+    },
+    "self_static_external": {
+      "class": "SelfIp",
+      "address": "{{ extra_ip_ext_self_static }}{{ interco_subnet_mask }}",
+      "trafficGroup": "traffic-group-local-only",
+      "vlan": "external",
+      "allowService": "none"
+    },
+    "route_internet": {
+      "class": "Route",
+      "gw": "{{ extra_gw_external }}",
+      "network": "default",
+      "mtu": 0
+    },
+    "route_internal": {
+      "class": "Route",
+      "gw": "{{ extra_gw_internal }}",
+      "network": "{{ extra_route_prefix_internal }}",
+      "mtu": 1500
+    },
+    "route_monitor_failover": {
+      "class": "Route",
+      "gw": "{{ extra_gw_internal }}",
+      "network": "168.63.129.16",
+      "mtu": 1500
+    }
+  }
+}

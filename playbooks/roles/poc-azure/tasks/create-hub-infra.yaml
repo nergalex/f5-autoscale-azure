@@ -1,0 +1,171 @@
+---
+- name: Create Network Security Group External
+  delegate_to: localhost
+  azure_rm_securitygroup:
+    resource_group: "rg-{{ extra_platform_name }}"
+    name: "nsg-{{ extra_platform_name }}-external"
+    location: "{{ extra_location }}"
+    tags: "{{ extra_platform_tags }} Name=nsg-{{ extra_platform_name }}-external owner={{ owner }}"
+    rules:
+      - name: in_allow_external
+        direction: Inbound
+        priority: 100
+        protocol: Tcp
+        access: Allow
+      - name: out_allow_all
+        direction: Outbound
+        priority: 999
+        access: Allow
+
+- name: Create VRF
+  delegate_to: localhost
+  azure_rm_routetable:
+    resource_group: "rg-{{ extra_platform_name }}"
+    location: "{{ extra_location }}"
+    name: "rt-{{ extra_platform_name }}-{{ item }}"
+    disable_bgp_route_propagation: True
+    tags: "{{ extra_platform_tags }} Name=rt-{{ extra_platform_name }}-{{ item }} owner={{ owner }}"
+  loop: "{{ design_hub.vrf }}"
+
+- name: Add External default route via Internet to VRF
+  delegate_to: localhost
+  azure_rm_route:
+    resource_group: "rg-{{ extra_platform_name }}"
+    route_table_name: "rt-{{ extra_platform_name }}-external"
+    name: 'default_internet'
+    address_prefix: '0.0.0.0/0'
+    next_hop_type: 'internet'
+
+- name: Create Subnet external
+  delegate_to: localhost
+  azure_rm_subnet:
+    resource_group: "rg-{{ extra_platform_name }}"
+    virtual_network: "vnet-{{ extra_platform_name }}"
+    name: "net-{{ extra_platform_name }}-external"
+    address_prefix: "{{ extra_external_subnet_address_prefix }}"
+    security_group_name: "nsg-{{ extra_platform_name }}-external"
+    route_table: "rt-{{ extra_platform_name }}-external"
+
+- name: Create Subnet internal
+  delegate_to: localhost
+  azure_rm_subnet:
+    resource_group: "rg-{{ extra_platform_name }}"
+    virtual_network: "vnet-{{ extra_platform_name }}"
+    name: "net-{{ extra_platform_name }}-internal"
+    address_prefix: "{{ extra_internal_subnet_address_prefix }}"
+    security_group_name: "nsg-{{ extra_platform_name }}-internal"
+    route_table: "rt-{{ extra_platform_name }}-internal"
+
+- name: Create Subnet sslo_inbound
+  delegate_to: localhost
+  azure_rm_subnet:
+    resource_group: "rg-{{ extra_platform_name }}"
+    virtual_network: "vnet-{{ extra_platform_name }}"
+    name: "net-{{ extra_platform_name }}-sslo_inbound"
+    address_prefix: "{{ extra_sslo_inbound_subnet_address_prefix }}"
+    security_group_name: "nsg-{{ extra_platform_name }}-internal"
+    route_table: "rt-{{ extra_platform_name }}-sslo_inbound"
+
+- name: Create Subnet sslo_outbound
+  delegate_to: localhost
+  azure_rm_subnet:
+    resource_group: "rg-{{ extra_platform_name }}"
+    virtual_network: "vnet-{{ extra_platform_name }}"
+    name: "net-{{ extra_platform_name }}-sslo_outbound"
+    address_prefix: "{{ extra_sslo_outbound_subnet_address_prefix }}"
+    security_group_name: "nsg-{{ extra_platform_name }}-internal"
+    route_table: "rt-{{ extra_platform_name }}-sslo_outbound"
+
+- name: Create Subnet pan_dataplane
+  delegate_to: localhost
+  azure_rm_subnet:
+    resource_group: "rg-{{ extra_platform_name }}"
+    virtual_network: "vnet-{{ extra_platform_name }}"
+    name: "net-{{ extra_platform_name }}-pan_dataplane"
+    address_prefix: "{{ extra_pan_dataplane_subnet_address_prefix }}"
+    security_group_name: "nsg-{{ extra_platform_name }}-internal"
+    route_table: "rt-{{ extra_platform_name }}-pan_dataplane"
+
+- name: Create Public IP Address for VPN GW
+  delegate_to: localhost
+  azure_rm_publicipaddress:
+    resource_group: "rg-{{ extra_platform_name }}"
+    allocation_method: Dynamic
+    domain_name: "vpngw-{{ extra_platform_name }}"
+    name: "vpngw-{{ extra_platform_name }}"
+    location: "{{ extra_location }}"
+    sku: 'Basic'
+    idle_timeout: 30
+    version: 'ipv4'
+    tags:
+      Name: "vpngw-{{ extra_platform_name }}"
+      owner: "{{ owner }}"
+
+- name: Create Subnet GatewaySubnet
+  delegate_to: localhost
+  azure_rm_subnet:
+    resource_group: "rg-{{ extra_platform_name }}"
+    virtual_network: "vnet-{{ extra_platform_name }}"
+    name: "GatewaySubnet"
+    address_prefix: "{{ extra_gateway_subnet_address_prefix }}"
+
+- name: Create virtual network gateway
+  delegate_to: localhost
+  azure_rm_virtualnetworkgateway:
+    resource_group: "rg-{{ extra_platform_name }}"
+    name: "vnet_gw-{{ extra_platform_name }}"
+    gateway_type: vpn
+    vpn_type: route_based
+    enable_bgp: false
+    sku: VpnGw1
+    ip_configurations:
+      - name: "vnet_gw_ip-{{ extra_platform_name }}"
+        private_ip_allocation_method: Dynamic
+        public_ip_address_name: "vpngw-{{ extra_platform_name }}"
+        subnet: "GatewaySubnet"
+    virtual_network: "vnet-{{ extra_platform_name }}"
+    tags:
+      Name: "vpngw-{{ extra_platform_name }}"
+      owner: "{{ owner }}"
+
+- name: VRF management - Add a route to On Premise management platform
+  delegate_to: localhost
+  azure_rm_route:
+    resource_group: "rg-{{ extra_platform_name }}"
+    route_table_name: "rt-{{ extra_platform_name }}-management"
+    name: 'MGT_on_premise'
+    address_prefix: '{{ extra_subnet_mgt_on_premise }}'
+    next_hop_type: 'virtual_network_gateway'
+
+- name: Get Public IP of VPN GW
+  delegate_to: localhost
+  azure_rm_publicipaddress_facts:
+    resource_group: "rg-{{ extra_platform_name }}"
+    name: "vpngw-{{ extra_platform_name }}"
+  register: facts_public_ip
+
+- name: CMP_OUTPUT
+  debug:
+    msg: "
+    key=vpn_gw_ip;value={{ facts_public_ip.ansible_facts.azure_publicipaddresses[0].properties.ipAddress }};help=Your Azure VPN GW IP;
+    key=ike_encryption;value=aes256;help=VirtualNetworkGatewayConnections;
+    key=ike_hash;value=sha256;help=VirtualNetworkGatewayConnections;
+    key=ike_dh;value=group2;help=VirtualNetworkGatewayConnections;
+    key=esp_encryption;value=aes192;help=VirtualNetworkGatewayConnections;
+    key=esp_hash;value=sha256;help=VirtualNetworkGatewayConnections;
+    key=pfs;value=none;help=VirtualNetworkGatewayConnections;
+    key=ike_lifetime (second);value=28800;help=VirtualNetworkGatewayConnections;
+    key=esp_lifetime (second);value=27000;help=VirtualNetworkGatewayConnections;
+    "
+
+
+
+
+
+
+
+
+
+
+
+...

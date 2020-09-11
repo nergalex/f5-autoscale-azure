@@ -1,0 +1,23 @@
+{# VAR #}
+{% set var_ip_mgt %}
+$(ifconfig mgmt | grep -E -o \"([0-9]{1,3}[\\.]){3}[0-9]{1,3}\"  | head -n 1){% endset %}
+{% set f5_do_rpm %}
+f5-declarative-onboarding-{{ f5_rpm_do_version }}-{{ f5_rpm_do_build_version }}.noarch.rpm{% endset %}
+{% set f5_as3_rpm %}
+f5-appsvcs-{{ f5_rpm_as3_version }}-{{ f5_rpm_as3_build_version }}.noarch.rpm{% endset %}
+{% set f5_ts_rpm %}
+f5-telemetry-{{ f5_rpm_ts_version }}-{{ f5_rpm_ts_build_version }}.noarch.rpm{% endset %}
+{% set script_do %}
+FN={{ f5_do_rpm }}\nCREDS=admin:{{ extra_admin_password }}\nIP={{ var_ip_mgt }}\nDATA=\"{\\\"operation\\\":\\\"INSTALL\\\",\\\"packageFilePath\\\":\\\"/var/config/rest/downloads/$FN\\\"}\"\n/usr/bin/tmsh modify auth user admin password {{ extra_admin_password }}\nmkdir -p /var/config/rest/downloads\ncd /var/lib/waagent/custom-script/download/\ncp `ls -r | head -1`/f5-declarative-onboarding-* /var/config/rest/downloads/\ncurl -kvu $CREDS \"https://$IP/mgmt/shared/iapp/package-management-tasks\" -H \"Origin: https://$IP\" -H \"Content-Type: application/json;charset=UTF-8\" --data $DATA\ncurl -sku $CREDS https://$IP/mgmt/shared/declarative-onboarding\n{% endset %}
+{% set script_as3 %}
+FN={{ f5_as3_rpm }}\nCREDS=admin:{{ extra_admin_password }}\nIP={{ var_ip_mgt }}\nDATA=\"{\\\"operation\\\":\\\"INSTALL\\\",\\\"packageFilePath\\\":\\\"/var/config/rest/downloads/$FN\\\"}\"\n/usr/bin/tmsh modify auth user admin password {{ extra_admin_password }}\nmkdir -p /var/config/rest/downloads\ncd /var/lib/waagent/custom-script/download/\ncp `ls -r | head -1`/f5-appsvcs-* /var/config/rest/downloads/\ncurl -kvu $CREDS \"https://$IP/mgmt/shared/iapp/package-management-tasks\" -H \"Origin: https://$IP\" -H \"Content-Type: application/json;charset=UTF-8\" --data $DATA\ncurl -sku $CREDS https://$IP/mgmt/shared/appsvcs/info\n{% endset %}
+{% set script_ts %}
+FN={{ f5_ts_rpm }}\nCREDS=admin:{{ extra_admin_password }}\nIP={{ var_ip_mgt }}\nDATA=\"{\\\"operation\\\":\\\"INSTALL\\\",\\\"packageFilePath\\\":\\\"/var/config/rest/downloads/$FN\\\"}\"\n/usr/bin/tmsh modify auth user admin password {{ extra_admin_password }}\nmkdir -p /var/config/rest/downloads\ncd /var/lib/waagent/custom-script/download/\ncp `ls -r | head -1`/f5-telemetry-* /var/config/rest/downloads/\ncurl -kvu $CREDS \"https://$IP/mgmt/shared/iapp/package-management-tasks\" -H \"Origin: https://$IP\" -H \"Content-Type: application/json;charset=UTF-8\" --data $DATA\ncurl -sku $CREDS https://$IP/mgmt/shared/telemetry/info\n{% endset %}
+{% set execute_do %}
+echo -e '{{ script_do }}' >> /config/install_do.sh; bash /config/install_do.sh{% endset %}
+{% set execute_as3 %}
+echo -e '{{ script_as3 }}' >> /config/install_as3.sh; bash /config/install_as3.sh{% endset %}
+{% set execute_ts %}
+echo -e '{{ script_ts }}' >> /config/install_ts.sh; bash /config/install_ts.sh{% endset %}
+{# RETURN #}
+sleep 120; {{ execute_do }}; sleep 30; {{ execute_as3 }}; sleep 30; {{ execute_ts }}; sleep 30

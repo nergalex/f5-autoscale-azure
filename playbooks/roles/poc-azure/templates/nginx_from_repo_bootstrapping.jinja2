@@ -1,0 +1,9 @@
+{# VAR #}
+{% set change_file_location %}
+mkdir -p /var/config/nginx_app_protect\ncd /var/lib/waagent/custom-script/download/\ncp `ls -r | head -1`/app-protect-* /var/config/nginx_app_protect\ncp `ls -r | head -1`/installAppProtect.sh /var/config/nginx_app_protect\ncd /var/config/nginx_app_protect{% endset %}
+{% set change_file_permission %}
+chmod u+x installAppProtect.sh{% endset %}
+{% set run_install_script %}
+./installAppProtect.sh app-protect-{{ nginx_rpm_version }}.zip{% endset %}
+{# RETURN #}
+{{ change_file_location }}; {{ change_file_permission }}; {{ run_install_script }}

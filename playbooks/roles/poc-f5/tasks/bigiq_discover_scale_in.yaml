@@ -1,0 +1,29 @@
+---
+- import_role:
+    name: f5devcentral.f5ansible
+
+- name: Discover a device and import config
+  delegate_to: localhost
+  bigiq_device_discovery:
+    state: absent
+    device_address: "{{ item.management }}"
+    device_port: "{{ extra_port_mgt }}"
+    device_username: "{{ extra_admin_user }}"
+    device_password: "{{ extra_admin_password }}"
+    provider:
+      user: "{{ extra_bigiq_admin_user }}"
+      password: "{{ extra_bigiq_admin_password }}"
+      server: "{{ extra_bigiq_ip_mgt }}"
+      server_port: "{{ extra_bigiq_port_mgt }}"
+      validate_certs: no
+  loop: "{{ stats_list_bigip_to_remove }}"
+  ignore_errors: yes
+
+
+
+
+
+
+
+
+...

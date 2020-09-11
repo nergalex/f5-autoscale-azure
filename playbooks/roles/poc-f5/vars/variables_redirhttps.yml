@@ -1,0 +1,8 @@
+--- 
+# bigiq
+extra_ip_mgt: 40.89.129.61
+extra_port_mgt: 8443
+extra_admin_user: admin
+extra_admin_password: F5N3tworks
+extra_state: present
+

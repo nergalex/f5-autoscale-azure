@@ -1,0 +1,12 @@
+---
+- name: Create a Subnet HA attached to VRF HA
+  delegate_to: localhost
+  azure_rm_subnet:
+    resource_group: "rg-{{ extra_platform_name }}"
+    virtual_network: "vnet-{{ extra_platform_name }}"
+    name: "net-{{ extra_platform_name }}-ha-{{ extra_vm_name }}"
+    address_prefix: "{{ extra_subnet_ha_address_prefix }}"
+    security_group_name: "nsg-{{ extra_platform_name }}-internal"
+    route_table: "rt-{{ extra_platform_name }}-ha"
+    tags: "{{ extra_platform_tags }} Name=net-{{ extra_platform_name }}-ha-{{ extra_vm_name }} owner={{ owner }}"
+  when: extra_cluster_mode is defined and extra_cluster_mode == "enable"

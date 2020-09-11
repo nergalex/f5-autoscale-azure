@@ -1,0 +1,59 @@
+--- 
+#bigiq
+extra_ip_mgt: 212.121.177.199
+extra_port_mgt: 10443
+extra_admin_user: admin
+extra_admin_password: F5N3tworks
+
+#bigip
+extra_bigip_target: bigip3.lab
+
+extra_template: template_httpswaf_bigiq_discovery.jinja2
+
+####### app
+extra_application: myapp31
+
+# Part only mandatory when add
+extra_vip: 10.42.1.103
+extra_port: 443
+extra_vlans :
+  - /Common/internal
+
+extra_cert : -----BEGIN CERTIFICATE-----\nMIICuDCCAaCgAwIBAgIEEYFxWjANBgkqhkiG9w0BAQsFADAeMQswCQYDVQQGEwJV\nUzEPMA0GA1UEAxQGcG9jX2J0MB4XDTE5MDQyMzE0MTAzNFoXDTIwMDQyMjE0MTAz\nNFowHjELMAkGA1UEBhMCVVMxDzANBgNVBAMUBnBvY19idDCCASIwDQYJKoZIhvcN\nAQEBBQADggEPADCCAQoCggEBAKixL9+qe8Fh7sr0F2TawSmhGUfFiiRNCNdWg8r2\n7KbzNJyrp7R9PeiHp6V8nSUhvnnN/tEiJMa/uZb+dejn8UgJuvnIR/qUK+BrW7Pe\nL9qw0n5Bx9Fl96J64OEBxPXNPx/oS4PoHas0zB8RZG3SBPfJrStiqoInUyx/LY+L\n7/zP0eM+SWnV6UBkCygVjXvUO0L8eHnbr7lcRyG3A8+5680pE2LgqbTbVPFDMczx\nIFa6G5ZcoO6sbFSzBzZNgd8nGwRxzVFk+TNsj46YmZuSV/PoJnOkcFWhcF31X+6q\n1fBzIiiAEThtTc9ww4meNZT+3XuJsQKAXgd4lCDN8pc+Qh8CAwEAATANBgkqhkiG\n9w0BAQsFAAOCAQEAdpyZvNKRMRz33zQGvnb3M+X7E8b+Z4MbnrtC1DrhjfPsrJqN\nBKRK2Mf2Xxh3pNb/gCEkLrRosYVrRyUvqxRuZuS9TyjWkWK9GBJlJi8qMNb753eI\nINP7uEKJM62m6RaPybf4aZNFGaRGBUdfbisMwhAPlAAjrNkZIsw9KpUbsdwJq+lP\nxGkS0/BLmI/XmeliPikXSWRltCRtohtR6Hljt0/jYL1yH8+6TDmj1n2Jyc8Q0REJ\n3z4kHxuJTs/q44vnpHtEl6zFQgJAXoyhvu+hBhms3ciQWZBFHjhe/2tDp6jjuaaU\nU16jBjcmY5Xgq1iLXd2c3LuiWOwbH8uybHz+Mw==\n-----END CERTIFICATE-----
+extra_key : -----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCosS/fqnvBYe7K\n9Bdk2sEpoRlHxYokTQjXVoPK9uym8zScq6e0fT3oh6elfJ0lIb55zf7RIiTGv7mW\n/nXo5/FICbr5yEf6lCvga1uz3i/asNJ+QcfRZfeieuDhAcT1zT8f6EuD6B2rNMwf\nEWRt0gT3ya0rYqqCJ1Msfy2Pi+/8z9HjPklp1elAZAsoFY171DtC/Hh526+5XEch\ntwPPuevNKRNi4Km021TxQzHM8SBWuhuWXKDurGxUswc2TYHfJxsEcc1RZPkzbI+O\nmJmbklfz6CZzpHBVoXBd9V/uqtXwcyIogBE4bU3PcMOJnjWU/t17ibECgF4HeJQg\nzfKXPkIfAgMBAAECggEAFlOtRGsqCgROOKpp1j1lx368+9TXXcqcWvPmaZyY4dfa\npMnLXoYdBYO+2pZNrjZzIWf0S/W67Fs/0w5GyNa6BpDTIHAzpqSp0gAjmQDVUJqK\noY9PRRW72tNspBs52Fab/jsek4zLMHfCdHI22porcihNNSrP6n4N8hu7Cf65erpH\nnudCheRKrN9E+E/WiWx8KKAvWi3h5aAacDeiq9+7AH9I5gg2zKry/e+W3tshoxye\nFF8eb66BhZlD1OB5Uuq+kpGbTCYDU/S4BqtbuqhrMMQbGyQGDJRasbbJHvM1xcF6\nkq9q0FxbvUxd47qbM6fjgocs+rawg3/pC15DtlCCMQKBgQDgfbg7Ige591xDx7ub\nBYIpEXGfOFABJL5Kn5yhokoWALxdW/+z5CgvPF5D1H0kE1IfcVMTaFYsPp2bECqq\njRtwFeypkr9645aMGLNDkLOSIHWvlmxvUs95p7ZZT3cJfT0yYiVB8lvlK+/D+oNL\nOHQopTFa1qcEyB1oKIPOEXCynQKBgQDAXohQ1DTf+ko/cxkcRmtn7UwLaxBubsfk\nxRi0W4ZqqGjkYhoDx1JpgKNixZJep3ML/mX3GbMQcsq2C+tKcOony0aTMeMxKh3K\ndWH9Q/Hm57bSQpgBdyaDBFqvVCtWIahSOhte1XgNv01uw1RSPcGvZP43ih/3urXD\nGakGsmu86wKBgFtAv3LKEnn1ovuqZQhO5OnsvVMLgPn2BaQv3WuWnKb1BZytmPN2\n+x64W1kXNwdDE07UsgBhmSXDDi3KFI3fbhfR0bHchRlfCgNIxxXf7B6qMyx86PcX\nol7BXc5QDwM8dXPVkW+NJO2zPnNbkaMx/4XGIJncR2gaMFn2nh1V2YnBAoGAZ/8z\nJq9yXlvLY/3vZ0/SpP6ui8W3vlv5iP3c2zRXuLWO71jxw3UwYoT+z1kMRku0cJl5\nulqUaaIFYOGUtEvS6uyEHPNtZZjlPhyzet4OmsxOE+GYl8I4ecAS3pJcU1Yiz0FG\npsA1BQmU7PqATW3Blfa9UH1FxwGTXgQzUsGGaT0CgYEAi3p31GbHXjpH8RK1RutP\n2AaUY/oFDNLxbvDGccxyhBjkHjlCRgjVNq72EjaQ+PRojD7laVOY8ZGp5osQ9p7q\nzi5F+tyCMuiVYd4j8L+RFQgVnrUqu8bPkTvEdVx7PyF+Li5UTAVZFWm78LTvJgHs\nTh31gWB237iIJBggMRTabx8=\n-----END PRIVATE KEY-----
+
+# Asm policy xml
+extra_waf_policy : https://csba68da132bc13x4906x9a4.blob.core.windows.net/waf-policy/policy1.xml?sp=r&st=2019-05-09T15:57:22Z&se=2019-07-30T23:57:22Z&spr=https&sv=2018-03-28&sig=0%2FG%2FpTO7SmDLeCG8L1WF0a6AeIucrhogL5mug4fHhYI%3D&sr=b
+
+extra_compression : false
+
+extra_log_profile : /Common/Shared/asm_log_bigiq
+
+extra_pool:
+  - name: default
+    lbmethod: predictive-node
+    servicePort: 30181
+    tagkey: f5pool
+    tagvalue: myapp1
+    resourcegroup: cloud42
+    subscripbtionid: a68da132-bc13-4906-9a4c-7fc788b78707
+    directoryid: 9b2906ce-b6bd-4115-ac96-184a610c7443
+    applicationid: 01caa0a1-b3a7-4890-a611-d604d0f2c66e
+    apikey: D29[5c6B-e/EuDZleqJ/wedyXWUbmEep
+
+#  - name: alt1
+#    lbmethod: predictive-node
+#    servicePort: 8091
+#    tagkey: f5pool
+#    tagvalue: myapp1
+#    resourcegroup: cloud42
+#    subscripbtionid: a68da132-bc13-4906-9a4c-7fc788b78707
+#    directoryid: 9b2906ce-b6bd-4115-ac96-184a610c7443
+#    applicationid: 01caa0a1-b3a7-4890-a611-d604d0f2c66e
+#    apikey: D29[5c6B-e/EuDZleqJ/wedyXWUbmEep
+
+extra_monitor:
+  send: "GET \/ HTTP\/1.1\\r\\nHost: www.test\\r\\nConnection: Close\\r\\n\\r\\n"
+  receive: "200 OK"
+  adaptive: true
+

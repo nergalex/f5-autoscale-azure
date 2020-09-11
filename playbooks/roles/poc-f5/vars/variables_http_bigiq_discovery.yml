@@ -1,0 +1,32 @@
+--- 
+#bigiq
+extra_ip_mgt: 212.121.177.199
+extra_port_mgt: 10443
+extra_admin_user: admin
+extra_admin_password: F5N3tworks
+
+#bigip
+extra_bigip_target: bigip3.lab
+
+extra_template: template_http_bigiq_discovery.jinja2
+
+# app
+extra_application: myapp1
+
+# only used for add
+extra_vip: 10.42.1.101
+extra_vlans :
+  - /Common/internal
+
+extra_pool:
+  servicePort: 30180
+extra_tagkey: f5pool
+extra_tagvalue: myapp1
+extra_resourcegroup: cloud42
+extra_subscripbtionid: a68da132-bc13-4906-9a4c-7fc788b78707
+extra_directoryid: 9b2906ce-b6bd-4115-ac96-184a610c7443
+extra_applicationid: 01caa0a1-b3a7-4890-a611-d604d0f2c66e
+extra_apikey: D29[5c6B-e/EuDZleqJ/wedyXWUbmEep
+
+
+

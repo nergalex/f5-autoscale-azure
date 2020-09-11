@@ -1,0 +1,70 @@
+---
+- name: SHOW VIP of each App
+  debug:
+    msg: "stats_apps: {{ stats_apps }}
+    "
+
+- name: login - retrieve CS ACCESS_TOKEN + REFRESH_TOKEN
+  uri:
+    url: "https://{{ extra_cs_hostname }}/{{ extra_cs_api_version }}/svc-auth/login"
+    method: POST
+    headers:
+      Content-Type: application/json
+    body: "{{ lookup('template','cs_login.json') }}"
+    body_format: json
+    timeout: 60
+    status_code: 200, 202
+    validate_certs: false
+  register: cs_login
+
+- name: Account details - retrieve CS ACCOUNT_ID
+  uri:
+    url: "https://{{ extra_cs_hostname }}/{{ extra_cs_api_version }}/svc-account/user"
+    method: GET
+    headers:
+        Accept: application/json
+        Authorization: "Bearer {{cs_login.json.access_token}}"
+    timeout: 60
+    status_code: 200, 202
+    validate_certs: false
+  register: cs_account
+
+- name: UPDATE GSLB Subscription
+  uri:
+    url: "https://{{ extra_cs_hostname }}/{{ extra_cs_api_version }}/svc-subscription/subscriptions/{{extra_subscription_id}}"
+    method: PUT
+    headers:
+      Content-Type: application/json
+      Authorization: "Bearer {{cs_login.json.access_token}}"
+    body: "{{ lookup('template','cs_update.json') }}"
+    body_format: json
+    timeout: 60
+    status_code: 200, 202
+    validate_certs: false
+  register: cs_update
+
+- name: GET GSLB status
+  uri:
+    url: "https://{{ extra_cs_hostname }}/{{ extra_cs_api_version }}/svc-subscription/subscriptions/{{ extra_subscription_id }}/status"
+    method: GET
+    headers:
+      Content-Type: application/json
+      Authorization: "Bearer {{ cs_login.json.access_token }}"
+    timeout: 60
+    status_code: 200, 202
+    validate_certs: false
+  register: cs_status
+  until: "cs_status.json.service_state == 'DEPLOYED'"
+  retries: 20
+  delay: 15
+
+- debug:
+    var: cs_status.json
+
+- name: CMP_OUTPUT
+  debug:
+    msg: "
+    key=subscription_id;value={{ extra_subscription_id }};help=subscription_id;
+    "
+
+...

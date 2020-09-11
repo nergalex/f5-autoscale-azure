@@ -1,0 +1,5 @@
+{# VAR #}
+{% set manage_route %}
+ip route add {{ extra_route_prefix_on_premise }} via {{ extra_gw_management }} dev eth0\nip route del 0.0.0.0/0 via {{ extra_gw_management }} dev eth0\nip route add 0.0.0.0/0 via {{ extra_gw_dataplane }} dev eth1{% endset %}
+{# RETURN #}
+{{ manage_route }}

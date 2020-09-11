@@ -1,0 +1,107 @@
+---
+- name: SET var_backend_address_pools
+  set_fact:
+    var_backend_address_pools: "{{ var_backend_address_pools }} +  [ {
+    'name': 'pool-{{ extra_cluster_name }}-{{ item.name }}-external'
+    } ]"
+  loop: "{{ extra_apps }}"
+
+- name: SET var_frontend_ip_configurations
+  set_fact:
+    var_frontend_ip_configurations: "{{ var_frontend_ip_configurations }} +  [ {
+    'name': 'vip-{{ item.name }}',
+    'public_ip_address': 'vip-{{ extra_hubplatform_name }}-{{ item.name }}'
+    } ]"
+  loop: "{{ extra_apps }}"
+
+- name: SET var_probes
+  set_fact:
+    var_probes: "{{ var_probes }} +  [ {
+    'name': 'hc-{{ extra_cluster_name }}-external-{{ item.name }}',
+    'port': {{ item.vs_listener_port_https }},
+    'protocol': 'Tcp',
+    'interval': 5,
+    'fail_count': 2
+    } ]"
+  loop: "{{ extra_apps }}"
+  loop_control:
+    index_var: cur_index
+
+- name: SET var_load_balancing_rules
+  set_fact:
+    var_load_balancing_rules: "{{ var_load_balancing_rules }} +  [ {
+    'name': 'rule-{{ extra_cluster_name }}-external-{{ item.name }}-https',
+    'frontend_ip_configuration': 'vip-{{ item.name }}',
+    'backend_address_pool': 'pool-{{ extra_cluster_name }}-{{ item.name }}-external',
+    'protocol': 'Tcp',
+    'load_distribution': 'Default',
+    'frontend_port': 443,
+    'backend_port': {{ item.vs_listener_port_https }},
+    'probe': 'hc-{{ extra_cluster_name }}-external-{{ item.name }}',
+    }, {
+    'name': 'rule-{{ extra_cluster_name }}-external-{{ item.name }}-http',
+    'frontend_ip_configuration': 'vip-{{ item.name }}',
+    'backend_address_pool': 'pool-{{ extra_cluster_name }}-{{ item.name }}-external',
+    'protocol': 'Tcp',
+    'load_distribution': 'Default',
+    'frontend_port': 80,
+    'backend_port': {{ item.vs_listener_port_http }},
+    'probe': 'hc-{{ extra_cluster_name }}-external-{{ item.name }}'
+    } ]"
+  loop: "{{ extra_apps }}"
+  loop_control:
+    index_var: cur_index
+
+- name: CREATE or UPDATE Public IP Address for VIP
+  delegate_to: localhost
+  azure_rm_publicipaddress:
+    resource_group: "rg-{{ extra_hubplatform_name }}"
+    allocation_method: Static
+    domain_name: "{{ item.name }}-{{ extra_hubplatform_name }}"
+    name: "vip-{{ extra_hubplatform_name }}-{{ item.name }}"
+    location: "{{ extra_location }}"
+    sku: 'Standard'
+    idle_timeout: 30
+    version: 'ipv4'
+    tags:
+      Name: "vip-{{ extra_hubplatform_name }}-{{ item.name }}"
+      owner: "{{ owner }}"
+  loop: "{{ extra_apps }}"
+
+- name: UPDATE external load balancer
+  delegate_to: localhost
+  azure_rm_loadbalancer:
+    resource_group: "rg-{{ extra_hubplatform_name }}"
+    name: "lb-{{ extra_cluster_name }}-external"
+    location: "{{ extra_location }}"
+    sku: Standard
+    frontend_ip_configurations: "{{ var_frontend_ip_configurations }}"
+    backend_address_pools: "{{ var_backend_address_pools }}"
+    probes: "{{ var_probes }}"
+    load_balancing_rules: "{{ var_load_balancing_rules }}"
+
+- name: DELETE temporary Public IP from ELB
+  delegate_to: localhost
+  azure_rm_publicipaddress:
+    resource_group: "rg-{{ extra_hubplatform_name }}"
+    name: "vip-{{ extra_hubplatform_name }}-{{ extra_cluster_name }}"
+    state: absent
+  ignore_errors: yes
+
+- name: GET Public IP of App
+  delegate_to: localhost
+  azure_rm_publicipaddress_facts:
+    resource_group: "rg-{{ extra_hubplatform_name }}"
+    name: "vip-{{ extra_hubplatform_name }}-{{ extra_app_name }}"
+  register: facts_public_ip
+
+- name: CMP_OUTPUT
+  debug:
+    msg: "
+    key=fqdn;value={{ extra_app_name }}-{{ extra_hubplatform_name }}.{{ extra_location }}.cloudapp.azure.com;help=Full Qualified Domain Name;
+    key=vip;value={{ facts_public_ip.ansible_facts.azure_publicipaddresses[0].properties.ipAddress }};help=Virtual IP on external Load Balancer;
+    key=https virtual port;value={{ extra_port }};help=Virtual port listening on ADC;
+    "
+
+
+...

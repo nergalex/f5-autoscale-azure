@@ -1,0 +1,119 @@
+---
+# PREPARE multi-AS3 call - https://clouddocs.f5.com/products/extensions/f5-appsvcs-extension/latest/declarations/miscellaneous.html#sending-multiple-declarations-in-a-single-request-big-iq
+- name: INIT var_multi_as3
+  set_fact:
+    var_multi_as3: []
+
+- name: SET var_multi_as3
+  set_fact:
+    var_multi_as3: "{{ var_multi_as3 }} + [{{ lookup('template', '{{ extra_template }}') }}]"
+  loop: "{{ stats_self_ips }}"
+
+- debug:
+    var: var_multi_as3
+
+- name: Get BIG-IQ Token
+  uri:
+    url: "https://{{ extra_bigiq_ip_mgt }}:{{ extra_bigiq_port_mgt }}/mgmt/shared/authn/login"
+    method: POST
+    headers:
+      Content-Type: application/json
+    body: "{{ lookup('template','bigiq_auth.jinja2') }}"
+    body_format: json
+    timeout: 60
+    status_code: 200, 202
+    validate_certs: false
+  register: auth
+
+# DEPLOY https://clouddocs.f5.com/products/big-iq/mgmt-api/v7.0.0/ApiReferences/bigiq_public_api_ref/r_as3_declare.html
+- name: DEPLOY AS3
+  uri:
+    url: "https://{{ extra_bigiq_ip_mgt }}:{{ extra_bigiq_port_mgt }}/mgmt/shared/appsvcs/declare?async=true"
+    method: POST
+    headers:
+        X-F5-Auth-Token: "{{auth.json.token.token}}"
+    body: "{{ var_multi_as3 }}"
+    body_format: json
+    timeout: 60
+    status_code: 200, 202
+    validate_certs: false
+  register: response_deploy_as3
+
+- debug:
+    var: response_deploy_as3.json['items']
+
+- name: WAIT for AS3 Deployment in progress
+  uri:
+    url: https://{{ extra_bigiq_ip_mgt }}:{{ extra_bigiq_port_mgt }}/mgmt/shared/appsvcs/task/{{item.id}}
+    method: GET
+    headers:
+      X-F5-Auth-Token: "{{auth.json.token.token}}"
+    timeout: 60
+    status_code: 200
+    validate_certs: false
+  until: "response_check_as3.json.results.0.message == 'success'"
+  retries: 10
+  delay: 10
+  register: response_check_as3
+  loop: "{{ response_deploy_as3.json['items'] }}"
+
+- debug:
+    var: response_check_as3
+
+# LOOKUP APP https://clouddocs.f5.com/products/big-iq/mgmt-api/v7.0.0/ApiReferences/bigiq_public_api_ref/r_adc_config_set_state.html?highlight=config%20sets#get-an-application
+- name: LOOKUP for App ID
+  uri:
+    url: https://{{ extra_bigiq_ip_mgt }}:{{ extra_bigiq_port_mgt }}/mgmt/cm/global/config-sets?$filter=configSetName eq '{{ extra_app.name }}_{{ extra_hub_vmss_name }}_{{ item.instance_id }}'
+    method: GET
+    headers:
+      X-F5-Auth-Token: "{{auth.json.token.token}}"
+    timeout: 60
+    status_code: 200, 202
+    validate_certs: false
+  register: bigiq_response_task
+  loop: "{{ stats_self_ips }}"
+
+- debug:
+    var: bigiq_response_task
+
+- name: INIT var_bigiq_apps
+  set_fact:
+    var_bigiq_apps: []
+
+- name: SET var_bigiq_apps
+  set_fact:
+    var_bigiq_apps: "{{ var_bigiq_apps }} + [{
+      'app_id': '{{ item.0.json['items'].0.selfLink }}',
+      'app_name': '{{ extra_app.name }}_{{ extra_hub_vmss_name }}_{{ item.1.instance_id }}'
+    }]"
+  loop: "{{ bigiq_response_task.results|zip(stats_self_ips)|list }}"
+
+- debug:
+    var: var_bigiq_apps
+
+# MERGE https://clouddocs.f5.com/products/big-iq/mgmt-api/v7.0.0/ApiReferences/bigiq_public_api_ref/r_as3_move_merge.html
+- name: AS3 Move/Merge
+  uri:
+    url: https://{{ extra_bigiq_ip_mgt }}:{{ extra_bigiq_port_mgt }}/mgmt/cm/global/global-apps-merge-move
+    method: POST
+    headers:
+      X-F5-Auth-Token: "{{auth.json.token.token}}"
+      Content-Type: application/json
+    body: "{{ lookup('template','bigiq_move.json') }}"
+    body_format: json
+    timeout: 60
+    status_code: 200, 202
+    validate_certs: false
+  register: response_move_app
+  loop: "{{ var_bigiq_apps }}"
+
+- debug:
+    var: response_move_app
+
+
+
+
+
+
+
+...

@@ -1,0 +1,167 @@
+---
+- name: FETCH as3 declarations on Master
+  uri:
+    url: https://{{ item.management }}/mgmt/shared/appsvcs/declare
+    method: GET
+    user: "admin"
+    password: "{{ extra_admin_password }}"
+    validate_certs: no
+    timeout: 300
+    status_code: 200, 202
+  register: var_master_as3_declarations
+  loop: "{{ stats_self_ips }}"
+  when: item.protect_from_scale_in == "True"
+
+- debug:
+    var: var_master_as3_declarations
+
+
+- name: INIT var_as3_declarations_tenant
+  set_fact:
+    var_as3_declarations_tenant: {}
+
+- name: SET var_as3_declarations_tenant
+  set_fact:
+    var_as3_declarations_tenant: "{{ var_as3_declarations_tenant | combine(item) }}"
+  when:
+    - item.key != 'Common'
+    - item.key != 'updateMode'
+    - item.key != 'schemaVersion'
+    - item.key != 'controls'
+    - item.key != 'id'
+  loop: "{{ lookup('dict', var_master_as3_declarations.results.json) }}"
+
+- debug:
+    var: var_as3_declarations_tenant
+
+#---------------------------- TEST 1 ----------------------------
+- name: INIT var_multi_as3
+  set_fact:
+    var_multi_as3: []
+
+- name: SET var_multi_as3
+  set_fact:
+    var_multi_as3: "{{ var_multi_as3 }} + [{{ lookup('template', 'as3_scale_out.json') }}]"
+  loop: "{{ stats_self_ips }}"
+  when: item.dataplane in stats_list_nodes_to_onboard
+  loop_control:
+    index_var: cur_index
+
+- debug:
+    var: var_multi_as3
+
+#---------------------------- TEST 2 ----------------------------
+#- name: INIT var_multi_as3
+#  set_fact:
+#    var_multi_as3: []
+#
+#- name: SET var_multi_as3
+#  set_fact:
+#    var_multi_as3: "{{ var_multi_as3 }} + [{{ lookup('template', 'as3_scale_out_declaration.json') }}]"
+#  loop: "{{ stats_self_ips }}"
+#  when: item.dataplane in stats_list_nodes_to_onboard
+#  loop_control:
+#    index_var: cur_index
+#
+#- debug:
+#    var: var_multi_as3
+
+- name: Get BIG-IQ Token
+  uri:
+    url: "https://{{ extra_bigiq_ip_mgt }}:{{ extra_bigiq_port_mgt }}/mgmt/shared/authn/login"
+    method: POST
+    headers:
+      Content-Type: application/json
+    body: "{{ lookup('template','bigiq_auth.jinja2') }}"
+    body_format: json
+    timeout: 60
+    status_code: 200, 202
+    validate_certs: false
+  register: auth
+
+#- name: DEPLOY AS3
+#  uri:
+#    url: "https://{{ extra_bigiq_ip_mgt }}:{{ extra_bigiq_port_mgt }}/mgmt/shared/appsvcs/declare?async=true"
+#    method: POST
+#    headers:
+#        X-F5-Auth-Token: "{{auth.json.token.token}}"
+#    body: "{{ var_multi_as3 }}"
+#    body_format: json
+#    timeout: 60
+#    status_code: 200, 202
+#    validate_certs: false
+#  register: response_deploy_as3
+#
+#- debug:
+#    var: response_deploy_as3.json['items']
+#
+#- name: WAIT for AS3 Deployment in progress
+#  uri:
+#    url: https://{{ extra_bigiq_ip_mgt }}:{{ extra_bigiq_port_mgt }}/mgmt/shared/appsvcs/task/{{item.id}}
+#    method: GET
+#    headers:
+#      X-F5-Auth-Token: "{{auth.json.token.token}}"
+#    timeout: 60
+#    status_code: 200
+#    validate_certs: false
+#  until: "response_check_as3.json.results.0.message == 'success'"
+#  retries: 10
+#  delay: 10
+#  register: response_check_as3
+#  loop: "{{ response_deploy_as3.json['items'] }}"
+#
+#- debug:
+#    var: response_check_as3
+#
+#- name: LOOKUP for App ID
+#  uri:
+#    url: https://{{ extra_bigiq_ip_mgt }}:{{ extra_bigiq_port_mgt }}/mgmt/cm/global/config-sets?$filter=configSetName eq '{{ extra_app.name }}_{{ extra_hub_vmss_name }}_{{ item.instance_id }}'
+#    method: GET
+#    headers:
+#      X-F5-Auth-Token: "{{auth.json.token.token}}"
+#    timeout: 60
+#    status_code: 200, 202
+#    validate_certs: false
+#  register: bigiq_response_task
+#  loop: "{{ stats_self_ips }}"
+#  when: item.protect_from_scale_in == "True"
+#
+#- debug:
+#    var: bigiq_response_task
+#
+#- name: INIT var_bigiq_apps
+#  set_fact:
+#    var_bigiq_apps: []
+#
+#- name: SET var_bigiq_apps
+#  set_fact:
+#    var_bigiq_apps: "{{ var_bigiq_apps }} + [{
+#      'app_id': '{{ item.0.json['items'].0.selfLink }}',
+#      'app_name': '{{ extra_app.name }}_{{ extra_hub_vmss_name }}_{{ item.1.instance_id }}'
+#    }]"
+#  loop: "{{ bigiq_response_task.results|zip(stats_self_ips)|list }}"
+#  when: item.1.protect_from_scale_in == "True"
+#
+#- debug:
+#    var: var_bigiq_apps
+#
+#- name: AS3 Move/Merge
+#  uri:
+#    url: https://{{ extra_bigiq_ip_mgt }}:{{ extra_bigiq_port_mgt }}/mgmt/cm/global/global-apps-merge-move
+#    method: POST
+#    headers:
+#      X-F5-Auth-Token: "{{auth.json.token.token}}"
+#      Content-Type: application/json
+#    body: "{{ lookup('template','bigiq_move.json') }}"
+#    body_format: json
+#    timeout: 60
+#    status_code: 200, 202
+#    validate_certs: false
+#  register: response_move_app
+#  loop: "{{ var_bigiq_apps }}"
+#
+#- debug:
+#    var: response_move_app
+
+
+...

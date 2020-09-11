@@ -1,0 +1,50 @@
+---
+- name: Set primary IP for external NIC for each App
+  set_fact:
+    var_ip_configurations: "{{ var_ip_configurations }} +  [ {
+    'name': 'self_static',
+    'primary': true,
+    'private_ip_address': '{{ extra_ip_ext_self_static }}',
+    'private_ip_allocation_method': 'Static',
+    'public_ip_address_name': 'external-{{ extra_platform_name }}-{{ extra_vm_name }}'
+    } ]"
+
+- name: Set secondary IP per App for external NIC
+  set_fact:
+    var_ip_configurations: "{{ var_ip_configurations }} +  [ {
+    'name': 'app{{ cur_index + 1 }}-{{ item }}',
+    'private_ip_address': '{{ extra_prefix_vip_apps }}.{{ 200 + cur_index }}',
+    'private_ip_allocation_method': 'Static',
+    'primary': false,
+    'load_balancer_backend_address_pools': [ {
+      'name': 'pool{{ cur_index + 1 }}-{{ extra_cluster_name }}-external',
+      'load_balancer': 'lb-{{ extra_cluster_name }}-external'
+      } ]
+    } ]"
+  loop: "{{ extra_app_name }}"
+  loop_control:
+    index_var: cur_index
+
+- name: DEBUG var_ip_configurations
+  debug:
+    msg: "{{ var_ip_configurations }}"
+
+- name: Add vNIC External as a pool member of external LB
+  delegate_to: localhost
+  azure_rm_networkinterface:
+    resource_group: "rg-{{ extra_platform_name }}"
+    name: "nic-{{ extra_platform_name }}-{{ extra_vm_name }}-external"
+    location: "{{ extra_location }}"
+    virtual_network: "vnet-{{ extra_platform_name }}"
+    subnet_name: "net-{{ extra_platform_name }}-external"
+    create_with_security_group: false
+    tags: "{{ extra_platform_tags }}
+    Name=nic-{{ extra_platform_name }}-{{ extra_vm_name }}-external
+    owner={{ owner }}"
+    ip_configurations: "{{ var_ip_configurations }}"
+
+- pause:
+    prompt: "Please wait during f5 big-ip boot"
+    minutes: 3
+
+...

@@ -1,0 +1,71 @@
+{
+    "$schema": "https://raw.githubusercontent.com/F5Networks/f5-appsvcs-extension/master/schema/latest/as3-schema.json",
+    "class": "AS3",
+    "persist": true,
+    "declaration": {
+        "class": "ADC",
+        "schemaVersion": "3.11.0",        
+        "Common": {
+            "class": "Tenant",
+            "Shared": {
+                "class": "Application",
+                "template": "shared",
+                "pool_hsl_bigiq": {
+                    "class": "Pool",
+                    "members": [
+                        {
+                            "serverAddresses": [ "{{ extra_dcd_ip }}" ],
+                            "servicePort": {{ extra_dcd_port }}
+                        }
+                    ]
+                },
+
+                "log_destination_bigiq": {
+                    "class": "Log_Destination",
+                    "type": "remote-high-speed-log",
+                    "pool": {
+                        "use": "pool_hsl_bigiq"
+                    }
+                },
+
+                "log_publisher_bigiq": {
+                    "class": "Log_Publisher",
+                    "destinations": [
+					    { "use": "log_destination_bigiq" }
+					]
+                },
+
+                "asm_log_bigiq": {
+                    "class": "Security_Log_Profile",
+                    "application": {
+                        "storageFilter": {
+                            "requestType": "illegal-including-staged-signatures"
+                        },
+                        "localStorage": false,
+                        "maxEntryLength": "10k",
+                        "responseLogging": "illegal",
+                        "protocol": "tcp",
+                        "remoteStorage": "bigiq",
+                        "reportAnomaliesEnabled": true,
+                        "servers": [
+                            {
+                                "address": "{{ extra_dcd_ip }}",
+                                "port": "{{ extra_dcd_port }}"
+                            }
+                        ]
+                    },
+
+                    "dosNetwork": {
+                        "publisher": {
+                            "use": "log_publisher_bigiq"
+                        }
+                    }
+
+                }
+            }
+        }
+    }
+}
+
+
+

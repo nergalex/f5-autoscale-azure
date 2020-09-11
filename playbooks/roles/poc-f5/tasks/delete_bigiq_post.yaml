@@ -1,0 +1,68 @@
+---
+
+#- name: log AS3 declaration
+#  copy: content="{{ lookup('template', '{{ extra_template }}') | to_nice_json }}" dest=as3.log
+
+- name: Get BIG-IQ Token
+  uri:
+    url: "https://{{ extra_bigiq_ip_mgt }}:{{ extra_bigiq_port_mgt }}/mgmt/shared/authn/login"
+    method: POST
+    headers:
+      Content-Type: application/json
+    body: "{{ lookup('template','bigiq_auth.jinja2') }}"
+    body_format: json
+    timeout: 60
+    status_code: 200, 202
+    validate_certs: false
+  register: auth
+
+- name: POST Tenant
+  uri:
+    url: "https://{{ extra_bigiq_ip_mgt }}:{{ extra_bigiq_port_mgt }}/mgmt/shared/appsvcs/declare?async=true"
+    method: POST
+    headers:
+        X-F5-Auth-Token: "{{auth.json.token.token}}"
+    body: "{{ lookup('template', '{{ extra_template }}') }}"
+    body_format: json
+    timeout: 60
+    status_code: 200, 202
+    validate_certs: false
+  register: json_response
+
+- debug:
+    var: json_response.json
+
+#######LOOP TO CHECK THE TASK - DO NOT MODIFY BELOW
+
+- name: Check AS3 Deployment Task - GET /mgmt/shared/appsvcs/task/<task_id>
+  uri:
+    url: https://{{ extra_bigiq_ip_mgt }}:{{ extra_bigiq_port_mgt }}/mgmt/shared/appsvcs/task/{{json_response.json.id}}
+    method: GET
+    headers:
+      X-F5-Auth-Token: "{{auth.json.token.token}}"
+    timeout: 60
+    status_code: 200, 202
+    validate_certs: false
+  register: json_response_task
+
+- debug:
+    var: json_response_task.json
+
+- name: LOOP Check AS3 Deployment Task - GET /mgmt/shared/appsvcs/task/<task_id>
+  uri:
+    url: https://{{ extra_bigiq_ip_mgt }}:{{ extra_bigiq_port_mgt }}/mgmt/shared/appsvcs/task/{{json_response.json.id}}
+    method: GET
+    headers:
+      Content-Type: application/json
+      X-F5-Auth-Token: "{{auth.json.token.token}}"
+    status_code: 200, 202
+    validate_certs: false
+  register: json_response_task
+  until: "json_response_task.json is defined and json_response_task.json.results[0].message == 'success'"
+  retries: 20
+  delay: 15
+
+- debug:
+    var: json_response_task.json
+
+...

@@ -1,0 +1,151 @@
+{
+    "$schema": "https://raw.githubusercontent.com/F5Networks/f5-appsvcs-extension/master/schema/latest/as3-schema.json",
+    "class": "AS3",
+    "persist": true,
+    "declaration": {
+        "class": "ADC",
+        "schemaVersion": "3.12.0",
+        "id": "id_{{ extra_app_name }}",
+        "controls": {
+            "class": "Controls",
+            "trace": true,
+            "logLevel": "debug"
+        },
+        "target": {
+            "address": "{{ extra_bigip_target }}"
+        },
+        "{{ extra_app_name }}": {
+            "class": "Tenant",
+            "defaultRouteDomain": 0,
+            "APP": {
+                "class": "Application",
+                "template": "https",
+                "statsProfile": {
+                    "class": "Analytics_Profile",
+                    "collectedStatsInternalLogging": true,
+                    "collectedStatsExternalLogging": false,
+                    "capturedTrafficInternalLogging": false,
+                    "capturedTrafficExternalLogging": false,
+                    "collectPageLoadTime": true,
+                    "collectMaxTpsAndThroughput": true,
+                    "collectClientSideStatistics": true,
+                    "collectResponseCode": true,
+                    "collectMethod": true,
+                    "collectOsAndBrowser": true,
+                    "collectUrl": true,
+                    "collectUserAgent": true,
+                    "collectUserSession": true,
+                    "sessionCookieSecurity": "ssl-only"
+                },
+                "dos_profile": {
+                    "class": "DOS_Profile",
+                    "application": {
+                        "rateBasedDetection": {
+                            "operationMode": "blocking",
+                            "thresholdsMode": "automatic",
+                            "escalationPeriod": 120,
+                            "deEscalationPeriod": 7200,
+                            "sourceIP": {
+                              "minimumTps": 20,
+                              "tpsIncreaseRate": 100,
+                              "maximumTps": 80,
+                              "minimumAutoTps": 5,
+                              "maximumAutoTps": 200,
+                              "clientSideDefenseEnabled": false,
+                              "captchaChallengeEnabled": false,
+                              "rateLimitingEnabled": true,
+                              "rateLimitingMode": "rate-limit"
+                            }
+                        }
+                    }
+                },
+                "serviceMain": {
+                    "class": "Service_HTTPS",
+                    "virtualAddresses": {{ extra_app_vip_list }},
+                    "virtualPort": {{ extra_port }},
+                    "snat": "auto"
+                    "redirect80": false,
+                    "securityLogProfiles": [
+					    { "bigip": "{{ extra_log_profile }}" }
+					],
+                    "allowVlans": {{ extra_vlans }},
+                    "snat": "auto",
+                    "profileAnalytics": {
+                        "use": "statsProfile"
+                    },
+                    "profileHTTP": {
+                        "use": "profile_http_{{ extra_app_name }}"
+                    },
+                    {% if extra_compression is sameas true or extra_compression == 'true' %}
+                    "profileHTTPCompression": {
+                        "bigip": "/Common/wan-optimized-compression"
+                    },
+                    {% endif %}
+                    "serverTLS": "csssl_profile_{{ extra_app_name }}",
+                    "policyWAF": {
+                        "use": "waf_policy_{{ extra_app_name }}"
+                    },
+                    "profileDOS": {
+                        "use": "dos_profile"
+                    },
+                    "pool": "pool_{{ extra_app_name }}_{{ extra_pool_copy[0].name }}"
+                    },
+
+                    {% for pool in extra_pool_copy %}
+                    "pool_{{ extra_app_name }}_{{ pool.name }}": {
+                        "class": "Pool",
+                        "loadBalancingMode" : "{{ pool.loadBalancingMode }}",
+                        "monitors": ["http"],
+                        "members": [
+                            {
+                                "servicePort": {{ pool.servicePort }},
+                                "addressDiscovery": "azure",
+                                "updateInterval": 10,
+                                "tagKey": "{{ pool.tagKey }}",
+                                "tagValue": "{{ pool.tagValue }}",
+                                "addressRealm": "private",
+                                "resourceGroup": "{{ pool.resourceGroup }}",
+                                "subscriptionId": "{{ pool.subscriptionId }}",
+                                "directoryId": "{{ pool.directoryId }}",
+                                "applicationId": "{{ pool.applicationId }}",
+                                "apiAccessKey": "{{ pool.apiAccessKey }}",
+                                "credentialUpdate": false
+                            }
+                        ]
+                    },
+                    {% endfor %}
+
+                    "profile_http_{{ extra_app_name }}": {
+                        "class": "HTTP_Profile",
+                        "xForwardedFor": true,
+                        "proxyType": "reverse",
+                        "requestChunking": "rechunk",
+                        "responseChunking": "rechunk"
+                    },
+                    "csssl_profile_{{ extra_app_name }}": {
+                        "class": "TLS_Server",
+                        "certificates": [{
+                            "certificate": "ssl_cert_{{ extra_app_name }}"
+                        }]
+                    },
+                    "ssl_cert_{{ extra_app_name }}": {
+                        "class": "Certificate",
+                        "certificate": "{{ extra_cert }}",
+                        "privateKey": "{{ extra_key }}",
+                        "passphrase": {
+                            "ciphertext": "{{ extra_passphrase_b64 }}",
+                            "protected": "eyJhbGciOiJkaXIiLCJlbmMiOiJub25lIn0",
+                            "miniJWE": true,
+                            "allowReuse": false,
+                            "ignoreChanges": false
+                        }
+                    },
+                    "waf_policy_{{ extra_app_name }}" : {
+                        "class": "WAF_Policy",
+                        "url": "{{ extra_waf_policy }}",
+                        "ignoreChanges": true
+                    }
+            }
+        }
+    }
+}

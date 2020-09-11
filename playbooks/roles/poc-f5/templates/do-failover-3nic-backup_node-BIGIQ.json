@@ -1,0 +1,135 @@
+{
+  "schemaVersion": "1.6.0",
+  "class": "Device",
+  "async": true,
+  "label": "do-cluster-byol-backup-3nic",
+  "Common": {
+    "class": "Tenant",
+    "hostname": "{{ extra_vm_name }}-mgt-{{ extra_platform_name }}.{{ extra_location }}.cloudapp.azure.com",
+    "dbvars": {
+      "class": "DbVariables",
+      "ui.advisory.enabled": true,
+      "ui.advisory.color": "green",
+      "ui.advisory.text": "{{ extra_project_name }}"
+    },
+    "local_licence": {
+      "class": "License",
+        "licenseType": "licensePool",
+        "bigIqHost": "{{ extra_bigiq_ip_mgt }}",
+        "bigIqUsername": "{{ extra_bigiq_admin_user }}",
+        "bigIqPassword": "{{ extra_bigiq_admin_password }}",
+        "licensePool": "{{ extra_project_name }}",
+        "bigIpUsername": "{{ extra_admin_user }}",
+        "bigIpPassword": "{{ extra_admin_password }}"
+    },
+    "provisioning_awaf": {
+         "class": "Provision",
+         "apm": "nominal",
+         "avr": "nominal"
+    },
+    "ntp_france": {
+      "class": "NTP",
+      "servers": [
+        "0.pool.ntp.org"
+      ],
+      "timezone": "Europe/Paris"
+    },
+    "external": {
+      "class": "VLAN",
+      "mtu": 1500,
+      "tag": 4094,
+      "interfaces": [
+        {
+          "name": "1.1",
+          "tagged": false
+        }
+      ]
+    },
+    "internal": {
+      "class": "VLAN",
+      "mtu": 1500,
+      "tag": 4093,
+      "interfaces": [
+        {
+          "name": "1.2",
+          "tagged": false
+        }
+      ]
+    },
+    "self_static_internal": {
+        "class": "SelfIp",
+        "address": "{{ extra_ip_int_self_static }}{{ interco_subnet_mask }}",
+        "trafficGroup": "traffic-group-local-only",
+        "vlan": "internal",
+        "allowService": "default"
+    },
+    "self_floating_internal_master": {
+        "class": "SelfIp",
+        "address": "{{ extra_ip_int_self_floating_peer }}{{ interco_subnet_mask }}",
+        "trafficGroup": "traffic-group-1",
+        "vlan": "internal",
+        "allowService": "default"
+    },
+    "self_floating_internal_backup": {
+        "class": "SelfIp",
+        "address": "{{ extra_ip_int_self_floating }}{{ interco_subnet_mask }}",
+        "trafficGroup": "traffic-group-1",
+        "vlan": "internal",
+        "allowService": "default"
+    },
+    "self_static_external": {
+      "class": "SelfIp",
+      "address": "{{ extra_ip_ext_self_static }}{{ interco_subnet_mask }}",
+      "trafficGroup": "traffic-group-local-only",
+      "vlan": "external",
+      "allowService": "none"
+    },
+    "route_internet": {
+      "class": "Route",
+      "gw": "{{ extra_gw_external }}",
+      "network": "default",
+      "mtu": 0
+    },
+    "route_internal": {
+      "class": "Route",
+      "gw": "{{ extra_gw_internal }}",
+      "network": "{{ extra_route_internal_prefix }}/{{ extra_route_internal_mask }}",
+      "mtu": 1500
+    },
+    "route_monitor_failover": {
+      "class": "Route",
+      "gw": "{{ extra_gw_internal }}",
+      "network": "168.63.129.16",
+      "mtu": 1500
+    },
+    "configsync": {
+      "class": "ConfigSync",
+      "configsyncIp": "{{ extra_ip_int_self_static }}"
+    },
+    {%- if not extra_cluster_network_failover -%}
+      "failoverAddress": {
+        "class": "FailoverUnicast",
+        "address": "{{ extra_ip_int_self_static }}"
+      },
+    {%- endif -%}
+    "failoverGroup-{{ extra_platform_name }}-{{ extra_cluster_name }}": {
+      "class": "DeviceGroup",
+      "type": "sync-failover",
+      "members": ["{{ extra_peer_name }}-mgt-{{ extra_platform_name }}.{{ extra_location }}.cloudapp.azure.com", "{{ extra_vm_name }}-mgt-{{ extra_platform_name }}.{{ extra_location }}.cloudapp.azure.com"],
+      "owner": "/Common/failoverGroup-{{ extra_platform_name }}-{{ extra_cluster_name }}/members/0",
+      "autoSync": {{ extra_auto_sync }},
+      "saveOnAutoSync": false,
+      "networkFailover": true,
+      "fullLoadOnSync": false,
+      "asmSync": true
+    },
+    "trust": {
+      "class": "DeviceTrust",
+      "localUsername": "admin",
+      "localPassword": "{{ extra_admin_password }}",
+      "remoteHost": "{{ extra_ip_int_self_static_master }}",
+      "remoteUsername": "admin",
+      "remotePassword": "{{ extra_admin_password }}"
+    }
+  }
+}

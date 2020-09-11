@@ -1,0 +1,29 @@
+---
+- name: CREATE Public IP Address for temporary VIP
+  delegate_to: localhost
+  azure_rm_publicipaddress:
+    resource_group: "rg-{{ extra_platform_name }}"
+    allocation_method: Static
+    domain_name: "{{ extra_cluster_name }}-{{ extra_platform_name }}"
+    name: "vip-{{ extra_platform_name }}-{{ extra_cluster_name }}"
+    location: "{{ extra_location }}"
+    sku: 'Standard'
+    idle_timeout: 30
+    version: 'ipv4'
+    tags:
+      Name: "vip-{{ extra_platform_name }}-{{ extra_cluster_name }}"
+      owner: "{{ owner }}"
+
+- name: CREATE external load balancer
+  delegate_to: localhost
+  azure_rm_loadbalancer:
+    resource_group: "rg-{{ extra_platform_name }}"
+    name: "lb-{{ extra_cluster_name }}-external"
+    location: "{{ extra_location }}"
+    sku: Standard
+    frontend_ip_configurations:
+      - name: "vip-{{ extra_cluster_name }}"
+        public_ip_address: "vip-{{ extra_platform_name }}-{{ extra_cluster_name }}"
+    backend_address_pools:
+      - name: "pool-{{ extra_cluster_name }}-external"
+...

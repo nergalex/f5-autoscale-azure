@@ -1,0 +1,39 @@
+---
+- name: CREATE a Virtual Machine Scale Set
+  delegate_to: localhost
+  azure_rm_virtualmachinescaleset_2NIC:
+    resource_group: "rg-{{ extra_platform_name }}"
+    name: "{{ extra_vmss_name }}"
+    location: "{{ extra_location }}"
+    vm_size: "{{ extra_vm_size }}"
+    capacity: "{{ extra_vmss_capacity }}"
+    overprovision: true
+    upgrade_policy: "Manual"
+    tags: "{{ extra_platform_tags }}
+              Name={{ extra_vmss_name }}
+              owner={{ owner }}"
+    admin_username: "{{ infra_admin_username }}"
+    ssh_password_enabled: false
+    ssh_public_keys:
+      - path: "/home/{{ infra_admin_username }}/.ssh/authorized_keys"
+        key_data: "{{ extra_key_data }}"
+    image:
+      offer: "{{ extra_offer }}"
+      publisher: "{{ extra_publisher }}"
+      sku: "{{ extra_sku }}"
+      version: "latest"
+    managed_disk_type: Premium_LRS
+    os_type: Linux
+    virtual_network_name: "vnet-{{ extra_platform_name }}"
+    subnet_mgt: "net-{{ extra_platform_name }}-management"
+    subnet_dataplane: "net-{{ extra_platform_name }}-{{ extra_subnet_dataplane_name }}"
+    load_balancer_mgt: "elb-{{ extra_platform_name }}-{{ extra_elb_management_name }}"
+    load_balancer_dataplane: "{{ extra_lb_dataplane_type }}-{{ extra_platform_name }}-{{ extra_lb_dataplane_name }}"
+    remove_on_absent: 'all'
+    enable_accelerated_networking: false
+    security_group: "nsg-{{ extra_platform_name }}-untrust"
+    zones: '{{ extra_availability_zone }}'
+  register: output_vmss
+
+
+...

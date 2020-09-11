@@ -1,0 +1,174 @@
+---
+- name: CREATE Public IP Address for Management NIC
+  delegate_to: localhost
+  azure_rm_publicipaddress:
+    resource_group: "rg-{{ extra_platform_name }}"
+    allocation_method: Static
+    domain_name: "{{ extra_vm_name }}-mgt-{{ extra_platform_name }}"
+    name: "mgt-{{ extra_platform_name }}-{{ extra_vm_name }}"
+    location: "{{ extra_location }}"
+    sku: 'Standard'
+    idle_timeout: 30
+    version: 'ipv4'
+    tags:
+      Name: "mgt-{{ extra_platform_tags }}-{{ extra_vm_name }}"
+      owner: "{{ owner }}"
+  register: output_ip_address
+
+- name: CREATE vNIC Management
+  delegate_to: localhost
+  azure_rm_networkinterface:
+    resource_group: "rg-{{ extra_platform_name }}"
+    name: "nic-{{ extra_platform_name }}-{{ extra_vm_name }}-management"
+    location: "{{ extra_location }}"
+    virtual_network: "vnet-{{ extra_platform_name }}"
+    subnet_name: "net-{{ extra_platform_name }}-management"
+    create_with_security_group: false
+    tags: "{{ extra_platform_tags }}
+    Name=nic-{{ extra_platform_name }}-{{ extra_vm_name }}-management
+    owner={{ owner }}"
+    ip_configurations:
+      - name: mgt
+        private_ip_address: "{{ extra_ip_mgt }}"
+        private_ip_allocation_method: 'Static'
+        primary: true
+        public_ip_address_name: "mgt-{{ extra_platform_name }}-{{ extra_vm_name }}"
+
+- name: CREATE vNIC pan_dataplane as a pool member of pan_dataplane ILB
+  delegate_to: localhost
+  azure_rm_networkinterface:
+    resource_group: "rg-{{ extra_platform_name }}"
+    name: "nic-{{ extra_platform_name }}-{{ extra_vm_name }}-pan_dataplane"
+    location: "{{ extra_location }}"
+    virtual_network: "vnet-{{ extra_platform_name }}"
+    subnet_name: "net-{{ extra_platform_name }}-pan_dataplane"
+    create_with_security_group: false
+    tags: "{{ extra_platform_tags }}
+    Name=nic-{{ extra_platform_name }}-{{ extra_vm_name }}-pan_dataplane
+    owner={{ owner }}"
+    ip_configurations:
+      - name: self_static
+        private_ip_address: "{{ extra_ip_pan_dataplane }}"
+        private_ip_allocation_method: 'Static'
+        primary: true
+        load_balancer_backend_address_pools:
+          - name: "pool-{{ extra_cluster_name }}-pan_dataplane"
+            load_balancer: "ilb-{{ extra_platform_name }}"
+    enable_ip_forwarding: true
+
+- name: CREATE a storage account
+  delegate_to: localhost
+  azure_rm_storageaccount:
+    resource_group: "rg-{{ extra_platform_name }}"
+    location: "{{ extra_location }}"
+    name: "pan{{ extra_vm_name }}data000"
+    type: Standard_LRS
+    kind: Storage
+    https_only: true
+    tags: "{{ extra_platform_tags }}
+      Name={{ extra_vm_name }}
+      owner={{ owner }}"
+
+- name: CREATE VM PAN FW - F5
+  delegate_to: localhost
+  azure_rm_virtualmachine:
+    resource_group: "rg-{{ extra_platform_name }}"
+    name: "{{ extra_vm_name }}"
+    location: "{{ extra_location }}"
+    short_hostname: "{{ extra_vm_name }}"
+    vm_size: "{{ extra_vm_size }}"
+    os_disk_size_gb: 512
+    tags: "{{ extra_platform_tags }}
+              Name={{ extra_vm_name }}
+              owner={{ owner }}
+              zone={{ extra_zone_name }}"
+    admin_username: "{{ infra_admin_username }}"
+    ssh_password_enabled: false
+    ssh_public_keys:
+      - path: "/home/{{ infra_admin_username }}/.ssh/authorized_keys"
+        key_data: "{{ extra_key_data }}"
+    image:
+      offer: "{{ extra_offer }}"
+      publisher: f5-networks
+      sku: "{{ extra_sku }}"
+      version: "{{ tmos_version }}"
+    plan:
+      name: "{{ extra_sku }}"
+      product: "{{ extra_offer }}"
+      publisher: f5-networks
+    managed_disk_type: Standard_LRS
+    os_type: Linux
+    storage_account_name: "pan{{ extra_vm_name }}data000"
+    network_interface_names:
+      - "nic-{{ extra_platform_name }}-{{ extra_vm_name }}-management"
+      - "nic-{{ extra_platform_name }}-{{ extra_vm_name }}-pan_dataplane"
+    zones: ['{{ extra_availability_zone }}']
+  when: extra_platform_name == "image_PAN"
+
+- name: CREATE VM PAN FW - PAN
+  delegate_to: localhost
+  azure_rm_virtualmachine:
+    resource_group: "rg-{{ extra_platform_name }}"
+    name: "{{ extra_vm_name }}"
+    location: "{{ extra_location }}"
+    short_hostname: "{{ extra_vm_name }}"
+    vm_size: "Standard_DS3_v2"
+    os_disk_size_gb: 512
+    tags: "{{ extra_platform_tags }}
+              Name={{ extra_vm_name }}
+              owner={{ owner }}
+              zone={{ extra_zone_name }}"
+    admin_username: "{{ infra_admin_username }}"
+    ssh_password_enabled: false
+    ssh_public_keys:
+      - path: "/home/{{ infra_admin_username }}/.ssh/authorized_keys"
+        key_data: "{{ extra_key_data }}"
+    image:
+      offer: vmseries1
+      publisher: paloaltonetworks
+      sku: bundle2
+      version: 9.0.4
+    plan:
+      name: bundle2
+      product: vmseries1
+      publisher: paloaltonetworks
+    managed_disk_type: Standard_LRS
+    os_type: Linux
+    storage_account_name: "pan{{ extra_vm_name }}data000"
+    network_interface_names:
+      - "nic-{{ extra_platform_name }}-{{ extra_vm_name }}-management"
+      - "nic-{{ extra_platform_name }}-{{ extra_vm_name }}-pan_dataplane"
+    zones: ['{{ extra_availability_zone }}']
+
+- name: CREATE VM Extension
+  delegate_to: localhost
+  azure_rm_virtualmachine_extension:
+    name: "extension-{{ extra_vm_name }}"
+    location: "{{ extra_location }}"
+    resource_group: "rg-{{ extra_platform_name }}"
+    virtual_machine_name: "{{ extra_vm_name }}"
+    publisher: 'Microsoft.Azure.Extensions'
+    virtual_machine_extension_type: 'CustomScript'
+    type_handler_version: 2.0
+    protected_settings: '{"commandToExecute": "{{ lookup("template", "f5_bootstrapping.jinja2") }}"}'
+    settings: '{"fileUris": [
+    "https://github.com/F5Networks/f5-declarative-onboarding/releases/download/v{{ f5_rpm_do_version }}/f5-declarative-onboarding-{{ f5_rpm_do_version }}-{{ f5_rpm_do_build_version }}.noarch.rpm",
+    "https://github.com/F5Networks/f5-appsvcs-extension/releases/download/v{{ f5_rpm_as3_version }}/f5-appsvcs-{{ f5_rpm_as3_version }}-{{ f5_rpm_as3_build_version }}.noarch.rpm",
+    "https://github.com/F5Networks/f5-telemetry-streaming/releases/download/v{{ f5_rpm_ts_version }}/f5-telemetry-{{ f5_rpm_ts_version }}-{{ f5_rpm_ts_build_version }}.noarch.rpm"
+    ]}'
+    auto_upgrade_minor_version: true
+  when: extra_platform_name == "image_PAN"
+
+- name: CMP_OUTPUT
+  debug:
+    msg: "
+    key=dns_mgt;value={{ extra_vm_name }}-mgt-{{ extra_platform_name }}.{{ extra_location }}.cloudapp.azure.com;help=FQDN for management access;
+    key=ip_mgt;value={{ output_ip_address.state.ip_address }};help=Public IP for management access;
+    key=cloudinit_log_file;value=/var/lib/waagent/custom-script/download/0/stdout;help=Standard output for cloudinit commands;
+    "
+
+
+
+
+
+...

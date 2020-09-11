@@ -1,0 +1,153 @@
+{
+    "service_type": "gslb",
+    "service_instance_name": "service_instance_{{ extra_service_instance_name }}",
+    "configuration": {
+        "gslb_service": {
+            "load_balanced_records": {
+                "lbr1": {
+                    "aliases": [
+                        "www",
+                        "www2"
+                    ],
+                    "display_name": "{{ extra_project_name }}",
+                    "enable": true,
+                    "persist_cidr_ipv4": 24,
+                    "persist_cidr_ipv6": 56,
+                    "persistence": true,
+                    "persistence_ttl": 3600,
+                    "proximity_rules": [
+                        {
+                            "pool": "pools_Global_Pool",
+                            "region": "regions_Everywhere",
+                            "score": 50
+                        },
+                        {
+                            "pool": "pools_EU_Pool",
+                            "region": "regions_EU",
+                            "score": 80
+                        }
+                    ],
+                    "rr_type": "A"
+                }
+            },
+            "monitors": {
+                "monitors_Web_Site_Monitor": {
+                    "display_name": "Web Site Monitor",
+                    "monitor_type": "https_advanced",
+                    "receive": "HTTP/1.",
+                    "send": "GET / HTTP/1.0\\r\\n\\r\\n",
+                    "target_port": 443
+                }
+            },
+            "pools": {
+                "pools_EU_Pool": {
+                    "display_name": "EU Pool",
+                    "enable": true,
+                    "load_balancing_mode": "round-robin",
+                    "max_answers": 1,
+                    "members": [
+                        {%- for app in stats_apps if app.location in extra_EU_azure_location -%}
+                        {
+                            "monitor": "monitors_Web_Site_Monitor",
+                            "virtual_server": "ipEndpoints_EU_app_instance_{{ app.name }}"
+                        }{%- if not loop.last -%},{% endif %}
+                        {%- endfor -%}
+                    ],
+                    "rr_type": "A",
+                    "ttl": 30
+                },
+                "pools_Global_Pool": {
+                    "display_name": "Global Pool",
+                    "enable": true,
+                    "load_balancing_mode": "round-robin",
+                    "max_answers": 1,
+                    "members": [
+                        {%- for app in stats_apps -%}
+                        {
+                            "monitor": "monitors_Web_Site_Monitor",
+                            "virtual_server": "ipEndpoints_Global_app_instance_{{ app.name }}"
+                        }{%- if not loop.last -%},{% endif %}
+                        {%- endfor -%}
+                    ],
+                    "rr_type": "A",
+                    "ttl": 30
+                }
+            },
+            "regions": {
+                "regions_EU": {
+                    "display_name": "Europe",
+                    "sectors": [
+                                {
+                                    "code": "EU",
+                                    "scale": "continent"
+                                }
+                            ]
+                },
+                "regions_Everywhere": {
+                    "display_name": "Everywhere",
+                    "sectors": [
+                               {
+                                    "code": "EU",
+                                    "scale": "continent"
+                                },
+                                {
+                                    "code": "NA",
+                                    "scale": "continent"
+                                },
+                                {
+                                    "code": "AN",
+                                    "scale": "continent"
+                                },
+                                {
+                                    "code": "AS",
+                                    "scale": "continent"
+                                },
+                                {
+                                    "code": "OC",
+                                    "scale": "continent"
+                                },
+                                {
+                                    "code": "SA",
+                                    "scale": "continent"
+                                },
+                                {
+                                    "code": "AF",
+                                    "scale": "continent"
+                                }
+                            ]
+                }
+            },
+            "virtual_servers": {
+                {%- for app in stats_apps if app.location in extra_EU_azure_location -%}
+                "ipEndpoints_EU_app_instance_{{ app.name }}": {
+                    "address": "{{ app.vip }}",
+                    "display_name": "app instance {{ app.name }} in {{ app.location }}",
+                    "monitor": "monitors_Web_Site_Monitor",
+                    "port": 443
+                },
+                {%- endfor -%}
+                {%- for app in stats_apps -%}
+                "ipEndpoints_Global_app_instance_{{ app.name }}": {
+                    "address": "{{ app.vip }}",
+                    "display_name": "app instance {{ app.name }} in {{ app.location }}",
+                    "monitor": "monitors_Web_Site_Monitor",
+                    "port": 443
+                }{%- if not loop.last -%},{% endif %}
+                {%- endfor -%}
+            },
+            "zone": "{{ extra_service_instance_name }}.{{ extra_cs_gslb_zone }}"
+        },
+        "nameservers": [
+            {
+                "ipv4": "107.162.150.190",
+                "ipv6": "2604:e180:1021::ffff:6ba2:96be/128",
+                "name": "ns91.dns.dev.f5aas.com"
+            }
+        ],
+        "schemaVersion": "0.1"
+    }
+}
+
+
+
+

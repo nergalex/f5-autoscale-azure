@@ -1,0 +1,74 @@
+---
+- name: Create a management route
+  delegate_to: localhost
+  bigip_management_route:
+    name: route_management_on_premise
+    gateway: "{{ extra_gw_management }}"
+    network: "{{ extra_route_prefix_on_premise }}"
+    state: present
+    provider:
+      user: "{{ extra_admin_user }}"
+      password: "{{ extra_admin_password }}"
+      server: "{{ item.management }}"
+      server_port: "{{ extra_port_mgt }}"
+      validate_certs: no
+  loop: "{{ stats_self_ips }}"
+
+- name: onboarding
+  uri:
+    url: https://{{ item.management }}/mgmt/shared/declarative-onboarding
+    method: "POST"
+    user: "admin"
+    password: "{{ extra_admin_password }}"
+    validate_certs: no
+    body: "{{ lookup('template', extra_template_do) }}"
+    body_format: json
+    timeout: 300
+    status_code: 200, 202
+  register: list_json_response
+  loop: "{{ stats_self_ips }}"
+
+- name: CMP_OUTPUT
+  debug:
+    msg: "
+    key=do_log_file;value=/var/log/restnoded/restnoded.log;help=restnoded failure log;
+    "
+
+- debug:
+    var: list_json_response
+
+- name: WAIT for onboarding IN PROGRESS
+  uri:
+    url: https://{{ item.item.management }}/mgmt/shared/declarative-onboarding/task/{{ item.json.id }}
+    method: GET
+    user: "admin"
+    password: "{{ extra_admin_password }}"
+    validate_certs: no
+    timeout: 60
+    status_code: 200, 202, 503
+  loop: "{{ list_json_response.results }}"
+  register: list_json_response_task_progress
+
+- debug:
+    var: list_json_response_task_progress
+
+- pause:
+    prompt: "Please wait during BIG-IP load modules"
+    minutes: 5
+
+- name: CHECK onboarding SUCCESS
+  uri:
+    url: https://{{ item.item.management }}/mgmt/shared/declarative-onboarding/task/{{ item.json.id }}
+    method: GET
+    user: "admin"
+    password: "{{ extra_admin_password }}"
+    validate_certs: no
+    timeout: 60
+    status_code: 200
+  register: list_json_response_task_success
+  loop: "{{ list_json_response.results }}"
+
+- debug:
+    var: list_json_response_task_success.results
+
+...

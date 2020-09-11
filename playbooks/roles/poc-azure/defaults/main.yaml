@@ -1,0 +1,38 @@
+---
+# default variables
+activity:
+owner: CMS_ansible_tower
+infra_admin_username: 'cyber'
+app_admin_username: 'cyber'
+key_dir: "{{ playbook_dir }}/roles/poc-azure/files/id_rsa.crt"
+key_data: " {{ lookup('file', key_dir) }} "
+tmos_version : "15.1.002000"
+f5_rpm_do_version: "1.11.1"
+f5_rpm_do_build_version: "1"
+f5_rpm_as3_version: "3.18.0"
+f5_rpm_as3_build_version: "4"
+f5_rpm_ts_version: "1.10.0"
+f5_rpm_ts_build_version: "2"
+var_frontend_ip_configurations: []
+var_probes: []
+var_load_balancing_rules: []
+var_ip_configurations: []
+var_backend_address_pools: []
+
+design_common:
+  vrf:
+    - management
+
+design_hub:
+  vrf:
+    - internal
+    - external
+    - sslo_inbound
+    - sslo_outbound
+    - pan_dataplane
+
+
+
+
+
+...

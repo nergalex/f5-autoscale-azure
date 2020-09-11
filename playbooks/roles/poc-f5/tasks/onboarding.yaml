@@ -1,0 +1,195 @@
+---
+- name: Create a management route
+  delegate_to: localhost
+  bigip_management_route:
+    name: route_management_on_premise
+    gateway: "{{ extra_gw_management }}"
+    network: "{{ extra_route_prefix_on_premise }}"
+    state: present
+    provider:
+      user: "{{ extra_admin_user }}"
+      password: "{{ extra_admin_password }}"
+      server: "{{ extra_ip_mgt }}"
+      server_port: "{{ extra_port_mgt }}"
+      validate_certs: no
+
+- name: onboarding ADC - PAYG - standalone config
+  uri:
+    url: "https://{{ extra_ip_mgt }}/mgmt/shared/declarative-onboarding"
+    method: "POST"
+    user: "admin"
+    password: "{{ extra_admin_password }}"
+    validate_certs: no
+    body: "{{ lookup('template', 'od-standalone-3nic-PAYG.json') }}"
+    body_format: json
+    timeout: 300
+    status_code: 200, 202
+  when: extra_nic == 3 and extra_cluster_mode == "disable" and extra_licensing == "PAYG"
+
+- name: onboarding ADC - PAYG - cluster config - master node
+  uri:
+    url: "https://{{ extra_ip_mgt }}/mgmt/shared/declarative-onboarding"
+    method: "POST"
+    user: "admin"
+    password: "{{ extra_admin_password }}"
+    validate_certs: no
+    body: "{{ lookup('template', 'od-failover-3nic-master_node-PAYG.json') }}"
+    body_format: json
+    timeout: 300
+    status_code: 200, 202
+  when: extra_nic == 3 and extra_cluster_mode == "enable" and extra_node_role == "master" and extra_licensing == "PAYG"
+  register: json_response
+
+- name: onboarding ADC - PAYG - cluster config - backup node
+  uri:
+    url: "https://{{ extra_ip_mgt }}/mgmt/shared/declarative-onboarding"
+    method: "POST"
+    user: "admin"
+    password: "{{ extra_admin_password }}"
+    validate_certs: no
+    body: "{{ lookup('template', 'od-failover-3nic-backup_node-PAYG.json') }}"
+    body_format: json
+    timeout: 300
+    status_code: 200, 202
+  when: extra_nic == 3 and extra_cluster_mode == "enable" and extra_node_role == "backup" and extra_licensing == "PAYG"
+  register: json_response
+
+- name: onboarding ADC - BYOL - cluster config - master node
+  uri:
+    url: "https://{{ extra_ip_mgt }}/mgmt/shared/declarative-onboarding"
+    method: "POST"
+    user: "admin"
+    password: "{{ extra_admin_password }}"
+    validate_certs: no
+    body: "{{ lookup('template', 'od-failover-3nic-master_node-BYOL.json') }}"
+    body_format: json
+    timeout: 300
+    status_code: 200, 202
+  when: extra_nic == 3 and extra_cluster_mode == "enable" and extra_node_role == "master" and extra_licensing == "BYOL"
+  register: json_response
+
+- name: onboarding ADC - BYOL - cluster config - backup node
+  uri:
+    url: "https://{{ extra_ip_mgt }}/mgmt/shared/declarative-onboarding"
+    method: "POST"
+    user: "admin"
+    password: "{{ extra_admin_password }}"
+    validate_certs: no
+    body: "{{ lookup('template', 'od-failover-3nic-backup_node-BYOL.json') }}"
+    body_format: json
+    timeout: 300
+    status_code: 200, 202
+  when: extra_nic == 3 and extra_cluster_mode == "enable" and extra_node_role == "backup" and extra_licensing == "BYOL"
+  register: json_response
+
+- name: onboarding ADC - BIGIQ - cluster config - master node
+  uri:
+    url: "https://{{ extra_ip_mgt }}/mgmt/shared/declarative-onboarding"
+    method: "POST"
+    user: "admin"
+    password: "{{ extra_admin_password }}"
+    validate_certs: no
+    body: "{{ lookup('template', 'do-failover-3nic-master_node-BIGIQ.json') }}"
+    body_format: json
+    timeout: 300
+    status_code: 200, 202
+  when: extra_nic == 3 and extra_cluster_mode == "enable" and extra_node_role == "master" and extra_licensing == "BIGIQ"
+  register: json_response
+
+- name: onboarding ADC - BIGIQ - cluster config - backup node
+  uri:
+    url: "https://{{ extra_ip_mgt }}/mgmt/shared/declarative-onboarding"
+    method: "POST"
+    user: "admin"
+    password: "{{ extra_admin_password }}"
+    validate_certs: no
+    body: "{{ lookup('template', 'do-failover-3nic-backup_node-BIGIQ.json') }}"
+    body_format: json
+    timeout: 300
+    status_code: 200, 202
+  when: extra_nic == 3 and extra_cluster_mode == "enable" and extra_node_role == "backup" and extra_licensing == "BIGIQ"
+  register: json_response
+
+- name: onboarding SSLO - BIGIP - cluster config - master node
+  uri:
+    url: "https://{{ extra_ip_mgt }}/mgmt/shared/declarative-onboarding"
+    method: "POST"
+    user: "admin"
+    password: "{{ extra_admin_password }}"
+    validate_certs: no
+    body: "{{ lookup('template', 'do-failover-5nic-master_node-BIGIQ.json') }}"
+    body_format: json
+    timeout: 300
+    status_code: 200, 202
+  when: extra_functional_type == "sslo" and extra_cluster_mode == "enable" and extra_node_role == "master" and extra_licensing == "BIGIQ"
+  register: json_response
+
+
+- name: onboarding SSLO - BIGIP - cluster config - backup node
+  uri:
+    url: "https://{{ extra_ip_mgt }}/mgmt/shared/declarative-onboarding"
+    method: "POST"
+    user: "admin"
+    password: "{{ extra_admin_password }}"
+    validate_certs: no
+    body: "{{ lookup('template', 'do-failover-5nic-backup_node-BIGIQ.json') }}"
+    body_format: json
+    timeout: 300
+    status_code: 200, 202
+  when: extra_functional_type == "sslo" and extra_cluster_mode == "enable" and extra_node_role == "backup" and extra_licensing == "BIGIQ"
+  register: json_response
+
+- name: CMP_OUTPUT
+  debug:
+    msg: "
+    key=do_log_file;value=/var/log/restnoded/restnoded.log;help=restnoded failure log;
+    "
+#######LOOP TO CHECK THE TASK - DO NOT MODIFY BELOW
+
+- debug:
+    var: json_response
+
+- pause:
+    prompt: "Please wait during f5 big-ip reboot"
+    minutes: 10
+
+
+# - name: Check onboarding status
+#   uri:
+#     url: "https://{{ extra_ip_mgt }}/mgmt/shared/declarative-onboarding?show=full"
+#     method: GET
+#     user: "admin"
+#     password: "{{ extra_admin_password }}"
+#     validate_certs: no
+#     timeout: 60
+#     status_code: 200, 202
+#   register: json_response_task
+
+# - debug:
+#     var: json_response_task.json
+
+# - name: Check onboarding status SUCCESS or PENDING
+#   uri:
+#     url: "https://{{ extra_ip_mgt }}/mgmt/shared/declarative-onboarding?show=full"
+#     method: GET
+#     user: "admin"
+#     password: "{{ extra_admin_password }}"
+#     validate_certs: no
+#     timeout: 60
+#     status_code: 200, 202
+#   register: json_response_task
+#   until: "json_response_task.json is defined and json_response_task.json.result.message == 'success'"
+#   retries: 45
+#   delay: 60
+
+# - name: Check onboarding status SUCCESS
+#   uri:
+#     url: "https://{{ extra_ip_mgt }}/mgmt/shared/declarative-onboarding?show=full"
+#     method: GET
+#     user: "admin"
+#     password: "{{ extra_admin_password }}"
+#     validate_certs: no
+#     timeout: 60
+#     status_code: 200
+
+...

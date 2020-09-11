@@ -1,0 +1,29 @@
+---
+- name: Get BIG-IQ Token
+  uri:
+    url: "https://{{ extra_bigiq_ip_mgt }}:{{ extra_bigiq_port_mgt }}/mgmt/shared/authn/login"
+    method: POST
+    headers:
+      Content-Type: application/json
+    body: "{{ lookup('template','bigiq_auth.jinja2') }}"
+    body_format: json
+    timeout: 60
+    status_code: 200, 202
+    validate_certs: false
+  register: auth
+
+- name: POST Force DELETE
+  uri:
+    url: "https://{{ extra_bigiq_ip_mgt }}:{{ extra_bigiq_port_mgt }}/mgmt/cm/global/tasks/force-delete"
+    method: POST
+    headers:
+        X-F5-Auth-Token: "{{auth.json.token.token}}"
+    body: "{ 'configSetName': '{{ extra_app_name }}_APP'}"
+    body_format: json
+    timeout: 60
+    status_code: 200, 202
+    validate_certs: false
+  register: json_response
+
+
+...

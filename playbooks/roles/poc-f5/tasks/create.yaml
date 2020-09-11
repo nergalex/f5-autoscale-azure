@@ -1,0 +1,14 @@
+---
+#- name: log AS3 declaration
+#  copy: content="{{ lookup('template', '{{ extra_template }}') }}" dest=as3.log
+
+- name: URI POST Tenant
+  delegate_to: localhost
+  uri:
+    url: "https://{{ extra_ip_mgt }}:{{ extra_port_mgt }}/mgmt/shared/appsvcs/declare"
+    method: "POST"                                                                    
+    user: "{{ extra_admin_user }}"                                                                                 
+    password: "{{ extra_admin_password }}"                                                                             
+    validate_certs: no                                                                            
+    body: "{{ lookup('template', '{{ extra_template }}') }}"                                      
+    body_format: json                                                                 

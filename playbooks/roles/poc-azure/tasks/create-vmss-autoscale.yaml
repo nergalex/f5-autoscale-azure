@@ -1,0 +1,70 @@
+---
+- name: GET VMSS info
+  delegate_to: localhost
+  azure_rm_virtualmachinescaleset_info:
+    resource_group: "rg-{{ extra_platform_name }}"
+    name: "{{ extra_vmss_name }}"
+    format: 'curated'
+  register: output_vmss_info
+
+- debug:
+    var: output_vmss_info
+
+- debug:
+    msg: "ID: {{ output_vmss_info.vmss.0.id }}"
+
+# https://docs.microsoft.com/fr-fr/python/api/azure-mgmt-monitor/azure.mgmt.monitor.v2015_04_01.models.autoscalesettingresource?view=azure-python
+- name: CREATE autoscale policy
+  delegate_to: localhost
+  azure_rm_autoscale:
+    resource_group: "rg-{{ extra_platform_name }}"
+    name: "autoscale-{{ extra_vmss_name }}"
+    target: "{{ output_vmss_info.vmss.0.id }}"
+    enabled: true
+    profiles:
+    - count: '2'
+      name: "Auto created scale condition 0"
+      min_count: '2'
+      max_count: '2'
+      rules:
+        - time_aggregation: Average
+          time_window: 2
+          direction: Increase
+          metric_name: "Percentage CPU"
+          metric_resource_uri: "{{ output_vmss_info.vmss.0.id }}"
+          value: '1'
+          threshold: 20
+          cooldown: 5
+          time_grain: 1
+          statistic: Average
+          operator: GreaterThan
+          type: ChangeCount
+        - time_aggregation: Average
+          time_window: 2
+          direction: Decrease
+          metric_name: "Percentage CPU"
+          metric_resource_uri: "{{ output_vmss_info.vmss.0.id }}"
+          value: '1'
+          threshold: 15
+          cooldown: 5
+          time_grain: 1
+          statistic: Average
+          operator: LessThan
+          type: ChangeCount
+      recurrence_timezone: "Romance Standard Time"
+      recurrence_days:
+        - Saturday
+      recurrence_hours:
+        - '1'
+      recurrence_mins:
+        - '0'
+      recurrence_frequency: Week
+    notifications:
+      - email_admin: False
+        email_co_admin: False
+        custom_emails:
+          - "{{ extra_webhook_email }}"
+        webhooks:
+          - "http://webhook-{{ extra_webhook_vm_name }}.{{ extra_location }}.cloudapp.azure.com/autoscale/{{ extra_vmss_name }}"
+
+...

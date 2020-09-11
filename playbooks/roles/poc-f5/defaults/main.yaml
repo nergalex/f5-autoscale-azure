@@ -1,0 +1,8 @@
+---
+# default variables
+activity:
+interco_subnet_mask: "/25"
+var_cert:
+var_key:
+
+

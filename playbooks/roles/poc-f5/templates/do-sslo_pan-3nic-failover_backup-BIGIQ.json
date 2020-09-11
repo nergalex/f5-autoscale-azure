@@ -1,0 +1,93 @@
+{
+  "schemaVersion": "1.9.0",
+  "class": "Device",
+  "async": true,
+  "label": "do-sslo-byol-3nic",
+  "Common": {
+    "class": "Tenant",
+    "hostname": "{{ extra_vm_name }}-mgt-{{ extra_platform_name }}.{{ extra_location }}.cloudapp.azure.com",
+    "dbvars": {
+      "class": "DbVariables",
+      "ui.advisory.enabled": true,
+      "ui.advisory.color": "green",
+      "ui.advisory.text": "SSLO - PAN NG FW"
+    },
+    "local_licence": {
+      "class": "License",
+        "licenseType": "licensePool",
+        "bigIqHost": "{{ extra_bigiq_ip_mgt }}",
+        "bigIqUsername": "{{ extra_bigiq_admin_user }}",
+        "bigIqPassword": "{{ extra_bigiq_admin_password }}",
+        "licensePool": "{{ extra_project_name }}",
+        "bigIpUsername": "{{ extra_admin_user }}",
+        "bigIpPassword": "{{ extra_admin_password }}"
+    },
+    "provisioning_pan": {
+         "class": "Provision",
+         "ltm": "nominal",
+         "apm": "nominal",
+         "asm": "nominal",
+         "avr": "nominal"
+    },
+    "ntp_france": {
+      "class": "NTP",
+      "servers": [
+        "0.pool.ntp.org"
+      ],
+      "timezone": "Europe/Paris"
+    },
+    "pan_dataplane": {
+      "class": "VLAN",
+      "mtu": 1500,
+      "tag": 4092,
+      "interfaces": [
+        {
+          "name": "1.1",
+          "tagged": false
+        }
+      ]
+    },
+    "self_static_pan_dataplane": {
+        "class": "SelfIp",
+        "address": "{{ extra_ip_pan_dataplane }}{{ interco_subnet_mask }}",
+        "trafficGroup": "traffic-group-local-only",
+        "vlan": "pan_dataplane",
+        "allowService": "default"
+    },
+    "route_internet": {
+      "class": "Route",
+      "gw": "{{ extra_pan_dataplane_gw_ip }}",
+      "network": "default",
+      "mtu": 0
+    },
+    "configsync": {
+      "class": "ConfigSync",
+      "configsyncIp": "{{ extra_ip_pan_dataplane }}"
+    },
+    {%- if not extra_cluster_network_failover -%}
+      "failoverAddress": {
+        "class": "FailoverUnicast",
+        "address": "{{ extra_ip_pan_dataplane }}"
+      },
+    {%- endif -%}
+    "failoverGroup-{{ extra_platform_name }}-{{ extra_cluster_name }}": {
+      "class": "DeviceGroup",
+      "type": "sync-failover",
+      "members": ["{{ extra_vm_name }}-mgt-{{ extra_platform_name }}.{{ extra_location }}.cloudapp.azure.com", "{{ extra_peer_name }}-mgt-{{ extra_platform_name }}.{{ extra_location }}.cloudapp.azure.com"],
+      "owner": "/Common/failoverGroup-{{ extra_platform_name }}-{{ extra_cluster_name }}/members/0",
+      "autoSync": true,
+      "saveOnAutoSync": false,
+      "networkFailover": true,
+      "fullLoadOnSync": false,
+      "asmSync": true
+    },
+    "trust": {
+      "class": "DeviceTrust",
+      "localUsername": "admin",
+      "localPassword": "{{ extra_admin_password }}",
+      "remoteHost": "{{ extra_ip_int_self_static_master }}",
+      "remoteUsername": "admin",
+      "remotePassword": "{{ extra_admin_password }}"
+    }
+  }
+}

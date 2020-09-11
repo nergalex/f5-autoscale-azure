@@ -1,0 +1,559 @@
+---
+- name: CREATE Public IP Address for External NIC
+  delegate_to: localhost
+  azure_rm_publicipaddress:
+    resource_group: "rg-{{ extra_platform_name }}"
+    allocation_method: Static
+    domain_name: "{{ extra_vm_name }}-external-{{ extra_platform_name }}"
+    name: "external-{{ extra_platform_name }}-{{ extra_vm_name }}"
+    location: "{{ extra_location }}"
+    sku: 'Standard'
+    idle_timeout: 30
+    version: 'ipv4'
+    tags:
+      Name: "external-{{ extra_platform_tags }}-{{ extra_vm_name }}"
+      owner: "{{ owner }}"
+
+- name: CREATE Public IP Address for SNAT pool External NIC
+  delegate_to: localhost
+  azure_rm_publicipaddress:
+    resource_group: "rg-{{ extra_platform_name }}"
+    allocation_method: Static
+    domain_name: "snatpool-{{ extra_vm_name }}-external-{{ extra_platform_name }}"
+    name: "snatpool-external-{{ extra_platform_name }}-{{ extra_vm_name }}"
+    location: "{{ extra_location }}"
+    sku: 'Standard'
+    idle_timeout: 30
+    version: 'ipv4'
+    tags:
+      Name: "external-{{ extra_platform_tags }}-{{ extra_vm_name }}"
+      owner: "{{ owner }}"
+
+- name: CREATE Public IP Address for Management NIC
+  delegate_to: localhost
+  azure_rm_publicipaddress:
+    resource_group: "rg-{{ extra_platform_name }}"
+    allocation_method: Static
+    domain_name: "{{ extra_vm_name }}-mgt-{{ extra_platform_name }}"
+    name: "mgt-{{ extra_platform_name }}-{{ extra_vm_name }}"
+    location: "{{ extra_location }}"
+    sku: 'Standard'
+    idle_timeout: 30
+    version: 'ipv4'
+    tags:
+      Name: "mgt-{{ extra_platform_tags }}-{{ extra_vm_name }}"
+      owner: "{{ owner }}"
+  register: output_ip_address
+
+- name: CREATE vNIC Management
+  delegate_to: localhost
+  azure_rm_networkinterface:
+    resource_group: "rg-{{ extra_platform_name }}"
+    name: "nic-{{ extra_platform_name }}-{{ extra_vm_name }}-management"
+    location: "{{ extra_location }}"
+    virtual_network: "vnet-{{ extra_platform_name }}"
+    subnet_name: "net-{{ extra_platform_name }}-management"
+    create_with_security_group: false
+    tags: "{{ extra_platform_tags }}
+    Name=nic-{{ extra_platform_name }}-{{ extra_vm_name }}-management
+    owner={{ owner }}"
+    ip_configurations:
+      - name: mgt
+        private_ip_address: "{{ extra_ip_mgt }}"
+        private_ip_allocation_method: 'Static'
+        primary: true
+        public_ip_address_name: "mgt-{{ extra_platform_name }}-{{ extra_vm_name }}"
+
+- name: CREATE vNIC External
+  delegate_to: localhost
+  azure_rm_networkinterface:
+    resource_group: "rg-{{ extra_platform_name }}"
+    name: "nic-{{ extra_platform_name }}-{{ extra_vm_name }}-external"
+    location: "{{ extra_location }}"
+    virtual_network: "vnet-{{ extra_platform_name }}"
+    subnet_name: "net-{{ extra_platform_name }}-external"
+    create_with_security_group: false
+    tags: "{{ extra_platform_tags }}
+    Name=nic-{{ extra_platform_name }}-{{ extra_vm_name }}-external
+    owner={{ owner }}"
+    ip_configurations:
+      - name: self_static
+        private_ip_address: "{{ extra_ip_ext_self_static }}"
+        private_ip_allocation_method: 'Static'
+        primary: true
+        public_ip_address_name: "external-{{ extra_platform_name }}-{{ extra_vm_name }}"
+      - name: snat_pool_sslo
+        private_ip_address: "{{ extra_ip_ext_snat_pool }}"
+        private_ip_allocation_method: 'Static'
+        primary: false
+        public_ip_address_name: "snatpool-external-{{ extra_platform_name }}-{{ extra_vm_name }}"
+    enable_ip_forwarding: true
+
+- name: CREATE vNIC Internal
+  delegate_to: localhost
+  azure_rm_networkinterface:
+    resource_group: "rg-{{ extra_platform_name }}"
+    name: "nic-{{ extra_platform_name }}-{{ extra_vm_name }}-internal"
+    location: "{{ extra_location }}"
+    virtual_network: "vnet-{{ extra_platform_name }}"
+    subnet_name: "net-{{ extra_platform_name }}-internal"
+    create_with_security_group: false
+    tags: "{{ extra_platform_tags }}
+    Name=nic-{{ extra_platform_name }}-{{ extra_vm_name }}-internal
+    owner={{ owner }}"
+    ip_configurations:
+      - name: self_static
+        private_ip_address: "{{ extra_ip_int_self_static }}"
+        private_ip_allocation_method: 'Static'
+        primary: true
+      - name: self_floating
+        private_ip_address: "{{ extra_ip_int_self_floating}}"
+        private_ip_allocation_method: 'Static'
+        primary: false
+    enable_ip_forwarding: true
+
+- name: CREATE vNIC sslo_inbound
+  delegate_to: localhost
+  azure_rm_networkinterface:
+    resource_group: "rg-{{ extra_platform_name }}"
+    name: "nic-{{ extra_platform_name }}-{{ extra_vm_name }}-sslo_inbound"
+    location: "{{ extra_location }}"
+    virtual_network: "vnet-{{ extra_platform_name }}"
+    subnet_name: "net-{{ extra_platform_name }}-sslo_inbound"
+    create_with_security_group: false
+    tags: "{{ extra_platform_tags }}
+    Name=nic-{{ extra_platform_name }}-{{ extra_vm_name }}-sslo_inbound
+    owner={{ owner }}"
+    ip_configurations:
+      - name: self_static
+        private_ip_address: "{{ extra_sslo_inbound_self_static }}"
+        private_ip_allocation_method: 'Static'
+        primary: true
+      - name: self_floating
+        private_ip_address: "{{ extra_sslo_inbound_self_floating}}"
+        private_ip_allocation_method: 'Static'
+        primary: false
+    enable_ip_forwarding: true
+  when: extra_functional_type == "sslo"
+
+- name: CREATE vNIC sslo_outbound
+  delegate_to: localhost
+  azure_rm_networkinterface:
+    resource_group: "rg-{{ extra_platform_name }}"
+    name: "nic-{{ extra_platform_name }}-{{ extra_vm_name }}-sslo_outbound"
+    location: "{{ extra_location }}"
+    virtual_network: "vnet-{{ extra_platform_name }}"
+    subnet_name: "net-{{ extra_platform_name }}-sslo_outbound"
+    create_with_security_group: false
+    tags: "{{ extra_platform_tags }}
+    Name=nic-{{ extra_platform_name }}-{{ extra_vm_name }}-sslo_outbound
+    owner={{ owner }}"
+    ip_configurations:
+      - name: self_static
+        private_ip_address: "{{ extra_sslo_outbound_self_static }}"
+        private_ip_allocation_method: 'Static'
+        primary: true
+      - name: self_floating
+        private_ip_address: "{{ extra_sslo_outbound_self_floating}}"
+        private_ip_allocation_method: 'Static'
+        primary: false
+    enable_ip_forwarding: true
+  when: extra_functional_type == "sslo"
+
+- name: CREATE VM AWAF
+  delegate_to: localhost
+  azure_rm_virtualmachine:
+    resource_group: "rg-{{ extra_platform_name }}"
+    name: "{{ extra_vm_name }}"
+    location: "{{ extra_location }}"
+    short_hostname: "{{ extra_vm_name }}"
+    vm_size: "{{ extra_vm_size }}"
+    os_disk_size_gb: 512
+    tags: "{{ extra_platform_tags }}
+              Name={{ extra_vm_name }}
+              owner={{ owner }}
+              zone={{ extra_zone_name }}"
+    admin_username: "{{ infra_admin_username }}"
+    ssh_password_enabled: false
+    ssh_public_keys:
+      - path: "/home/{{ infra_admin_username }}/.ssh/authorized_keys"
+        key_data: "{{ extra_key_data }}"
+    image:
+      offer: "{{ extra_offer }}"
+      publisher: f5-networks
+      sku: "{{ extra_sku }}"
+      version: "{{ tmos_version }}"
+    plan:
+      name: "{{ extra_sku }}"
+      product: "{{ extra_offer }}"
+      publisher: f5-networks
+    managed_disk_type: Standard_LRS
+    os_type: Linux
+    network_interface_names:
+      - "nic-{{ extra_platform_name }}-{{ extra_vm_name }}-management"
+      - "nic-{{ extra_platform_name }}-{{ extra_vm_name }}-external"
+      - "nic-{{ extra_platform_name }}-{{ extra_vm_name }}-internal"
+    zones: ['{{ extra_availability_zone }}']
+  when: extra_functional_type == "awaf"
+
+- name: CREATE VM SSLO
+  delegate_to: localhost
+  azure_rm_virtualmachine:
+    resource_group: "rg-{{ extra_platform_name }}"
+    name: "{{ extra_vm_name }}"
+    location: "{{ extra_location }}"
+    short_hostname: "{{ extra_vm_name }}"
+    vm_size: "{{ extra_vm_size }}"
+    tags: "{{ extra_platform_tags }}
+              Name={{ extra_vm_name }}
+              owner={{ owner }}
+              zone={{ extra_zone_name }}"
+    admin_username: "{{ infra_admin_username }}"
+    ssh_password_enabled: false
+    ssh_public_keys:
+      - path: "/home/{{ infra_admin_username }}/.ssh/authorized_keys"
+        key_data: "{{ extra_key_data }}"
+    image:
+      offer: "{{ extra_offer }}"
+      publisher: f5-networks
+      sku: "{{ extra_sku }}"
+      version: "{{ tmos_version }}"
+    os_disk_size_gb: 512
+    plan:
+      name: "{{ extra_sku }}"
+      product: "{{ extra_offer }}"
+      publisher: f5-networks
+    managed_disk_type: Standard_LRS
+    os_type: Linux
+    network_interface_names:
+      - "nic-{{ extra_platform_name }}-{{ extra_vm_name }}-management"
+      - "nic-{{ extra_platform_name }}-{{ extra_vm_name }}-external"
+      - "nic-{{ extra_platform_name }}-{{ extra_vm_name }}-internal"
+      - "nic-{{ extra_platform_name }}-{{ extra_vm_name }}-sslo_inbound"
+      - "nic-{{ extra_platform_name }}-{{ extra_vm_name }}-sslo_outbound"
+    zones: ['{{ extra_availability_zone }}']
+  when: extra_functional_type == "sslo"
+
+- name: CREATE VM Extension
+  delegate_to: localhost
+  azure_rm_virtualmachine_extension:
+    name: "extension-{{ extra_vm_name }}"
+    location: "{{ extra_location }}"
+    resource_group: "rg-{{ extra_platform_name }}"
+    virtual_machine_name: "{{ extra_vm_name }}"
+    publisher: 'Microsoft.Azure.Extensions'
+    virtual_machine_extension_type: 'CustomScript'
+    type_handler_version: 2.0
+    protected_settings: '{"commandToExecute": "{{ lookup("template", "f5_bootstrapping.jinja2") }}"}'
+    settings: '{"fileUris": [
+    "https://github.com/F5Networks/f5-declarative-onboarding/releases/download/v{{ f5_rpm_do_version }}/f5-declarative-onboarding-{{ f5_rpm_do_version }}-{{ f5_rpm_do_build_version }}.noarch.rpm",
+    "https://github.com/F5Networks/f5-appsvcs-extension/releases/download/v{{ f5_rpm_as3_version }}/f5-appsvcs-{{ f5_rpm_as3_version }}-{{ f5_rpm_as3_build_version }}.noarch.rpm",
+    "https://github.com/F5Networks/f5-telemetry-streaming/releases/download/v{{ f5_rpm_ts_version }}/f5-telemetry-{{ f5_rpm_ts_version }}-{{ f5_rpm_ts_build_version }}.noarch.rpm"
+    ]}'
+    auto_upgrade_minor_version: true
+
+- name: GET facts of internal subnet
+  delegate_to: localhost
+  azure_rm_subnet_info:
+    resource_group: "rg-{{ extra_platform_name }}"
+    virtual_network_name: "vnet-{{ extra_platform_name }}"
+    name: "net-{{ extra_platform_name }}-internal"
+  register: output_subnet_internal
+
+- name: CREATE hub load balancer
+  delegate_to: localhost
+  azure_rm_loadbalancer:
+    resource_group: "rg-{{ extra_platform_name }}"
+    name: "ilb-{{ extra_platform_name }}"
+    location: "{{ extra_location }}"
+    sku: Standard
+    frontend_ip_configurations:
+      - name: "redir-{{ extra_cluster_name }}-internal"
+        private_ip_address: "{{ extra_ip_internal_lb }}"
+        private_ip_allocation_method: Static
+        subnet: "{{ output_subnet_internal.subnets[0].id }}"
+    backend_address_pools:
+      - name: "pool-{{ extra_cluster_name }}-internal"
+    probes:
+      - name: "hc-tcp-443"
+        port: 443
+        protocol: Tcp
+        interval: 5
+        fail_count: 2
+    load_balancing_rules:
+      - name: "rule-{{ extra_cluster_name }}-internal"
+        frontend_ip_configuration: "redir-{{ extra_cluster_name }}-internal"
+        backend_address_pool: "pool-{{ extra_cluster_name }}-internal"
+        protocol: All
+        load_distribution: Default
+        frontend_port: 0
+        backend_port: 0
+        probe: "hc-tcp-443"
+  when: extra_functional_type == "awaf"
+
+- name: GET facts of sslo_inbound subnet
+  delegate_to: localhost
+  azure_rm_subnet_info:
+    resource_group: "rg-{{ extra_platform_name }}"
+    virtual_network_name: "vnet-{{ extra_platform_name }}"
+    name: "net-{{ extra_platform_name }}-sslo_inbound"
+  register: output_subnet_sslo_inbound
+  when: extra_functional_type == "sslo"
+
+- name: GET facts of sslo_outbound subnet
+  delegate_to: localhost
+  azure_rm_subnet_info:
+    resource_group: "rg-{{ extra_platform_name }}"
+    virtual_network_name: "vnet-{{ extra_platform_name }}"
+    name: "net-{{ extra_platform_name }}-sslo_outbound"
+  register: output_subnet_sslo_outbound
+  when: extra_functional_type == "sslo"
+
+- name: GET facts of pan_dataplane subnet
+  delegate_to: localhost
+  azure_rm_subnet_info:
+    resource_group: "rg-{{ extra_platform_name }}"
+    virtual_network_name: "vnet-{{ extra_platform_name }}"
+    name: "net-{{ extra_platform_name }}-pan_dataplane"
+  register: output_subnet_pan_dataplane
+  when: extra_functional_type == "sslo"
+
+- name: CREATE hub load balancer
+  delegate_to: localhost
+  azure_rm_loadbalancer:
+    resource_group: "rg-{{ extra_platform_name }}"
+    name: "ilb-{{ extra_platform_name }}"
+    location: "{{ extra_location }}"
+    sku: Standard
+    frontend_ip_configurations:
+      - name: "redir-{{ extra_cluster_name }}-internal"
+        private_ip_address: "{{ extra_ip_internal_lb }}"
+        private_ip_allocation_method: Static
+        subnet: "{{ output_subnet_internal.subnets[0].id }}"
+      - name: "redir-{{ extra_cluster_name }}-sslo_inbound_to_sslo"
+        private_ip_address: "{{ extra_sslo_inbound_lb_vip_to_sslo }}"
+        private_ip_allocation_method: Static
+        subnet: "{{ output_subnet_sslo_inbound.subnets[0].id }}"
+      - name: "redir-{{ extra_cluster_name }}-sslo_outbound_to_sslo"
+        private_ip_address: "{{ extra_sslo_outbound_lb_vip_to_sslo }}"
+        private_ip_allocation_method: Static
+        subnet: "{{ output_subnet_sslo_outbound.subnets[0].id }}"
+      - name: "redir-{{ extra_cluster_name }}-pan_dataplane"
+        private_ip_address: "{{ extra_pan_dataplane_lb_vip }}"
+        private_ip_allocation_method: Static
+        subnet: "{{ output_subnet_pan_dataplane.subnets[0].id }}"
+    backend_address_pools:
+      - name: "pool-{{ extra_cluster_name }}-internal"
+      - name: "pool-{{ extra_cluster_name }}-sslo_inbound_to_sslo"
+      - name: "pool-{{ extra_cluster_name }}-sslo_outbound_to_sslo"
+      - name: "pool-{{ extra_cluster_name }}-pan_dataplane"
+    probes:
+      - name: "hc-tcp-443"
+        port: 443
+        protocol: Tcp
+        interval: 5
+        fail_count: 2
+    load_balancing_rules:
+      - name: "rule-{{ extra_cluster_name }}-internal"
+        frontend_ip_configuration: "redir-{{ extra_cluster_name }}-internal"
+        backend_address_pool: "pool-{{ extra_cluster_name }}-internal"
+        protocol: All
+        load_distribution: Default
+        frontend_port: 0
+        backend_port: 0
+        probe: "hc-tcp-443"
+      - name: "rule-{{ extra_cluster_name }}-sslo_inbound_to_sslo"
+        frontend_ip_configuration: "redir-{{ extra_cluster_name }}-sslo_inbound_to_sslo"
+        backend_address_pool: "pool-{{ extra_cluster_name }}-sslo_inbound_to_sslo"
+        protocol: All
+        load_distribution: Default
+        frontend_port: 0
+        backend_port: 0
+        probe: "hc-tcp-443"
+      - name: "rule-{{ extra_cluster_name }}-sslo_outbound_to_sslo"
+        frontend_ip_configuration: "redir-{{ extra_cluster_name }}-sslo_outbound_to_sslo"
+        backend_address_pool: "pool-{{ extra_cluster_name }}-sslo_outbound_to_sslo"
+        protocol: All
+        load_distribution: Default
+        frontend_port: 0
+        backend_port: 0
+        probe: "hc-tcp-443"
+      - name: "rule-{{ extra_cluster_name }}-pan_dataplane"
+        frontend_ip_configuration: "redir-{{ extra_cluster_name }}-pan_dataplane"
+        backend_address_pool: "pool-{{ extra_cluster_name }}-pan_dataplane"
+        protocol: All
+        load_distribution: Default
+        frontend_port: 0
+        backend_port: 0
+        probe: "hc-tcp-443"
+  when: extra_functional_type == "sslo"
+
+- name: UPDATE vNIC Internal as a pool member of internal ILB
+  delegate_to: localhost
+  azure_rm_networkinterface:
+    resource_group: "rg-{{ extra_platform_name }}"
+    name: "nic-{{ extra_platform_name }}-{{ extra_vm_name }}-internal"
+    location: "{{ extra_location }}"
+    virtual_network: "vnet-{{ extra_platform_name }}"
+    subnet_name: "net-{{ extra_platform_name }}-internal"
+    create_with_security_group: false
+    tags: "{{ extra_platform_tags }}
+    Name=nic-{{ extra_platform_name }}-{{ extra_vm_name }}-internal
+    owner={{ owner }}"
+    ip_configurations:
+      - name: self_static
+        private_ip_address: "{{ extra_ip_int_self_static }}"
+        private_ip_allocation_method: 'Static'
+        primary: true
+      - name: self_floating
+        private_ip_address: "{{ extra_ip_int_self_floating}}"
+        private_ip_allocation_method: 'Static'
+        primary: false
+        load_balancer_backend_address_pools:
+          - name: "pool-{{ extra_cluster_name }}-internal"
+            load_balancer: "ilb-{{ extra_platform_name }}"
+    enable_ip_forwarding: true
+
+- name: UPDATE vNIC sslo_inbound as a pool member of sslo_inbound_to_sslo ILB
+  delegate_to: localhost
+  azure_rm_networkinterface:
+    resource_group: "rg-{{ extra_platform_name }}"
+    name: "nic-{{ extra_platform_name }}-{{ extra_vm_name }}-sslo_inbound"
+    location: "{{ extra_location }}"
+    virtual_network: "vnet-{{ extra_platform_name }}"
+    subnet_name: "net-{{ extra_platform_name }}-sslo_inbound"
+    create_with_security_group: false
+    tags: "{{ extra_platform_tags }}
+    Name=nic-{{ extra_platform_name }}-{{ extra_vm_name }}-sslo_inbound
+    owner={{ owner }}"
+    ip_configurations:
+      - name: self_static
+        private_ip_address: "{{ extra_sslo_inbound_self_static }}"
+        private_ip_allocation_method: 'Static'
+        primary: true
+      - name: self_floating
+        private_ip_address: "{{ extra_sslo_inbound_self_floating }}"
+        private_ip_allocation_method: 'Static'
+        primary: false
+        load_balancer_backend_address_pools:
+          - name: "pool-{{ extra_cluster_name }}-sslo_inbound_to_sslo"
+            load_balancer: "ilb-{{ extra_platform_name }}"
+    enable_ip_forwarding: true
+  when: extra_functional_type == "sslo"
+
+- name: UPDATE vNIC sslo_outbound as a pool member of sslo_outbound_to_sslo ILB
+  delegate_to: localhost
+  azure_rm_networkinterface:
+    resource_group: "rg-{{ extra_platform_name }}"
+    name: "nic-{{ extra_platform_name }}-{{ extra_vm_name }}-sslo_outbound"
+    location: "{{ extra_location }}"
+    virtual_network: "vnet-{{ extra_platform_name }}"
+    subnet_name: "net-{{ extra_platform_name }}-sslo_outbound"
+    create_with_security_group: false
+    tags: "{{ extra_platform_tags }}
+    Name=nic-{{ extra_platform_name }}-{{ extra_vm_name }}-sslo_outbound
+    owner={{ owner }}"
+    ip_configurations:
+      - name: self_static
+        private_ip_address: "{{ extra_sslo_outbound_self_static }}"
+        private_ip_allocation_method: 'Static'
+        primary: true
+      - name: self_floating
+        private_ip_address: "{{ extra_sslo_outbound_self_floating }}"
+        private_ip_allocation_method: 'Static'
+        primary: false
+        load_balancer_backend_address_pools:
+          - name: "pool-{{ extra_cluster_name }}-sslo_outbound_to_sslo"
+            load_balancer: "ilb-{{ extra_platform_name }}"
+    enable_ip_forwarding: true
+  when: extra_functional_type == "sslo"
+
+- name: CREATE default route via internal LB REDIR
+  delegate_to: localhost
+  azure_rm_route:
+    resource_group: "rg-{{ extra_platform_name }}"
+    route_table_name: "rt-{{ extra_platform_name }}-internal"
+    name: "redir-{{ extra_cluster_name }}"
+    address_prefix: '0.0.0.0/0'
+    next_hop_type: 'virtual_appliance'
+    next_hop_ip_address: '{{ extra_ip_internal_lb }}'
+
+- name: VRF sslo_inbound - CREATE default route via pan_dataplane ILB
+  delegate_to: localhost
+  azure_rm_route:
+    resource_group: "rg-{{ extra_platform_name }}"
+    route_table_name: "rt-{{ extra_platform_name }}-sslo_inbound"
+    name: "redir-{{ extra_cluster_name }}-to_PAN"
+    address_prefix: '0.0.0.0/0'
+    next_hop_type: 'virtual_appliance'
+    next_hop_ip_address: '{{ extra_pan_dataplane_lb_vip }}'
+  when: extra_functional_type == "sslo"
+
+- name: VRF sslo_inbound - CREATE monitoring route via pan_dataplane ILB
+  delegate_to: localhost
+  azure_rm_route:
+    resource_group: "rg-{{ extra_platform_name }}"
+    route_table_name: "rt-{{ extra_platform_name }}-sslo_inbound"
+    name: "redir-{{ extra_cluster_name }}-monitor_PAN"
+    address_prefix: "{{ extra_sslo_inbound_lb_vip_to_pan }}/32"
+    next_hop_type: 'virtual_appliance'
+    next_hop_ip_address: '{{ extra_pan_dataplane_lb_vip }}'
+  when: extra_functional_type == "sslo"
+
+- name: VRF sslo_outbound - CREATE spoke route via pan_dataplane ILB
+  delegate_to: localhost
+  azure_rm_route:
+    resource_group: "rg-{{ extra_platform_name }}"
+    route_table_name: "rt-{{ extra_platform_name }}-sslo_outbound"
+    name: "redir-{{ extra_cluster_name }}-to_PAN"
+    address_prefix: '10.228.72.0/21'
+    next_hop_type: 'virtual_appliance'
+    next_hop_ip_address: '{{ extra_pan_dataplane_lb_vip }}'
+  when: extra_functional_type == "sslo"
+
+- name: VRF sslo_outbound - CREATE monitoring route via pan_dataplane ILB
+  delegate_to: localhost
+  azure_rm_route:
+    resource_group: "rg-{{ extra_platform_name }}"
+    route_table_name: "rt-{{ extra_platform_name }}-sslo_outbound"
+    name: "redir-{{ extra_cluster_name }}-monitor_PAN"
+    address_prefix: "{{ extra_sslo_outbound_lb_vip_to_pan }}/32"
+    next_hop_type: 'virtual_appliance'
+    next_hop_ip_address: '{{ extra_pan_dataplane_lb_vip }}'
+  when: extra_functional_type == "sslo"
+
+- name: VRF pan_dataplane - CREATE spoke route via sslo_inbound ILB
+  delegate_to: localhost
+  azure_rm_route:
+    resource_group: "rg-{{ extra_platform_name }}"
+    route_table_name: "rt-{{ extra_platform_name }}-pan_dataplane"
+    name: "redir-{{ extra_cluster_name }}-to_sslo_inbound"
+    address_prefix: '10.228.72.0/21'
+    next_hop_type: 'virtual_appliance'
+    next_hop_ip_address: '{{ extra_sslo_inbound_lb_vip_to_sslo }}'
+  when: extra_functional_type == "sslo"
+
+- name: VRF pan_dataplane - CREATE default route via sslo_inbound ILB
+  delegate_to: localhost
+  azure_rm_route:
+    resource_group: "rg-{{ extra_platform_name }}"
+    route_table_name: "rt-{{ extra_platform_name }}-pan_dataplane"
+    name: "redir-{{ extra_cluster_name }}-to_sslo_outbound"
+    address_prefix: '0.0.0.0/0'
+    next_hop_type: 'virtual_appliance'
+    next_hop_ip_address: '{{ extra_sslo_outbound_lb_vip_to_sslo }}'
+  when: extra_functional_type == "sslo"
+
+- name: CMP_OUTPUT
+  debug:
+    msg: "
+    key=dns_mgt;value={{ extra_vm_name }}-mgt-{{ extra_platform_name }}.{{ extra_location }}.cloudapp.azure.com;help=FQDN for management access;
+    key=ip_mgt;value={{ output_ip_address.state.ip_address }};help=Public IP for management access;
+    key=cloudinit_log_file;value=/var/lib/waagent/custom-script/download/0/stdout;help=Standard output for cloudinit commands;
+    "
+
+
+
+
+
+...

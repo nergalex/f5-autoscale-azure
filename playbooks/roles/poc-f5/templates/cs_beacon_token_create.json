@@ -1,0 +1,4 @@
+{
+  "name": "{{ extra_vm_name }}",
+  "description": "Token for BIG-IP created by CMP"
+}

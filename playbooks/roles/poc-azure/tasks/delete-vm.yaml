@@ -1,0 +1,8 @@
+- name: Delete VM
+  delegate_to: localhost
+  azure_rm_virtualmachine:
+    resource_group: "rg-{{ extra_platform_name }}"
+    name: "{{ extra_vm_name }}"
+    state: absent
+    remove_on_absent: all
+

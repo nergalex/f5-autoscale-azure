@@ -1,0 +1,15 @@
+--- 
+# bigiq
+extra_ip_mgt: 212.121.177.199
+extra_port_mgt: 10443
+extra_admin_user: admin
+extra_admin_password: F5N3tworks
+# bigip
+extra_state: absent
+extra_device_address: 52.143.163.174
+extra_device_user: xbi
+extra_device_password: F5N3tworks
+extra_device_modules:
+  - ltm
+  - asm
+  - security_shared

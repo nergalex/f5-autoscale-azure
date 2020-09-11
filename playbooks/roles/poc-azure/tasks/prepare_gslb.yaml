@@ -1,0 +1,58 @@
+---
+- name: GET Public IP of each App
+  delegate_to: localhost
+  azure_rm_publicipaddress_facts:
+    resource_group: "rg-{{ item.associated_adc__parent__name }}"
+    name: "vip-{{ item.associated_adc__parent__name }}-{{ item.name }}"
+  register: facts_public_ips
+  loop: "{{ extra_apps }}"
+
+- name: INIT var_vips
+  set_fact:
+    var_vips: []
+    var_apps: []
+    var_tmp_apps: []
+
+- name: SET var_tmp_apps
+  set_fact:
+    var_tmp_apps: "{{ var_tmp_apps }} + [{
+      'name': '{{ item.name }}',
+      'resource_group': 'rg-{{ item.associated_adc__parent__name }}',
+      'location': '{{ item.associated_adc__parent__location }}',
+    }]"
+  loop: "{{ extra_apps }}"
+
+- name: SET var_vips
+  set_fact:
+    var_vips: "{{ var_vips + [item.ansible_facts.azure_publicipaddresses[0].properties.ipAddress] }}"
+  loop: "{{ facts_public_ips.results }}"
+
+- name: SET with_together App and VIP
+  set_fact:
+    var_apps: "{{ var_apps }} + [{
+      'name': '{{ item.0.name }}',
+      'resource_group': 'rg-{{ item.0.resource_group }}',
+      'location': '{{ item.0.location }}',
+      'vip': '{{ item.1 }}',
+    }]"
+  loop: "{{ var_tmp_apps|zip(var_vips)|list }}"
+
+- name: SHOW var_apps
+  debug:
+    msg: "var_apps: {{ var_apps }}
+    "
+
+- name: "Artifact VIPs to Tower Workflows"
+  set_stats:
+    data:
+      stats_apps:  "{{ var_apps }}"
+
+
+
+
+
+
+
+
+
+...

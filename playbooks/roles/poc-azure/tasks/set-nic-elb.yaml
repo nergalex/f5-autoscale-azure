@@ -1,0 +1,122 @@
+---
+- name: INIT var_adcstackmembers
+  set_fact:
+    var_adcstackmembers: []
+
+- name: SET var_adcstackmembers
+  set_fact:
+    var_adcstackmembers: "{{ var_adcstackmembers }} +  [ {
+    'name': '{{ item.name }}',
+    'external_static_ip': '{{ item.external_static_ip }}',
+    } ]"
+  loop: "{{ extra_adcstackmembers }}"
+
+- name: INIT var_ip_ext_vip
+  set_fact:
+    var_ip_ext_vip: []
+
+- name: SET var_ip_ext_vip
+  set_fact:
+    var_ip_ext_vip: "{{ var_ip_ext_vip + [ item ] }}"
+  loop: "{{ extra_ip_ext_vip }}"
+
+- name: DEBUG var_ip_ext_vip
+  debug:
+    msg: "var_ip_ext_vip: {{ var_ip_ext_vip }}"
+
+- name: ADC1 - SET var_external_ip_configuration = self.static
+  set_fact:
+    var_external_ip_configuration:
+      - name: self_static
+        private_ip_address: "{{ var_adcstackmembers[0].external_static_ip }}"
+        private_ip_allocation_method: 'Static'
+        primary: true
+        public_ip_address_name: "external-{{ extra_hubplatform_name }}-{{ var_adcstackmembers[0].name }}"
+  when: var_adcstackmembers|length >= 1
+
+- name: ADC1 - SET var_external_ip_configuration += VIPs
+  set_fact:
+    var_external_ip_configuration: "{{ var_external_ip_configuration }} +  [ {
+      'name': 'vip-{{ item.app_name }}',
+      'private_ip_address': '{{ item.vip_address }}',
+      'private_ip_allocation_method': 'Static',
+      'primary': false,
+      'load_balancer_backend_address_pools': [ {
+        'name': 'pool-{{ extra_cluster_name }}-{{ item.app_name }}-external',
+        'load_balancer': 'lb-{{ extra_cluster_name }}-external'
+      } ]
+    } ]"
+  loop: "{{ var_ip_ext_vip.0 }}"
+  when: var_adcstackmembers|length >= 1
+
+- name: ADC1 - DEBUG var_external_ip_configuration += VIPs
+  debug:
+    msg: "
+    var_external_ip_configuration = {{ var_external_ip_configuration }}
+    "
+  when: var_adcstackmembers|length >= 1
+
+- name: ADC1 - UPDATE vNIC External as a pool member of external LB
+  delegate_to: localhost
+  azure_rm_networkinterface:
+    resource_group: "rg-{{ extra_hubplatform_name }}"
+    name: "nic-{{ extra_hubplatform_name }}-{{ var_adcstackmembers[0].name }}-external"
+    virtual_network: "vnet-{{ extra_hubplatform_name }}"
+    subnet_name: "net-{{ extra_hubplatform_name }}-external"
+    create_with_security_group: false
+    tags: "{{ extra_platform_tags }}
+    Name=nic-{{ extra_hubplatform_name }}-{{ var_adcstackmembers[0].name }}-external
+    owner={{ owner }}"
+    ip_configurations: "{{ var_external_ip_configuration }}"
+  when: var_adcstackmembers|length >= 1
+
+- name: ADC2 - SET var_external_ip_configuration = self.static
+  set_fact:
+    var_external_ip_configuration:
+      - name: self_static
+        private_ip_address: "{{ var_adcstackmembers[1].external_static_ip }}"
+        private_ip_allocation_method: 'Static'
+        primary: true
+        public_ip_address_name: "external-{{ extra_hubplatform_name }}-{{ var_adcstackmembers[1].name }}"
+  when: var_adcstackmembers|length == 2
+
+- name: ADC2 - SET var_external_ip_configuration += VIPs
+  set_fact:
+    var_external_ip_configuration: "{{ var_external_ip_configuration }} +  [ {
+      'name': 'vip-{{ item.app_name }}',
+      'private_ip_address': '{{ item.vip_address }}',
+      'private_ip_allocation_method': 'Static',
+      'primary': false,
+      'load_balancer_backend_address_pools': [ {
+        'name': 'pool-{{ extra_cluster_name }}-{{ item.app_name }}-external',
+        'load_balancer': 'lb-{{ extra_cluster_name }}-external'
+      } ]
+    } ]"
+  loop: "{{ var_ip_ext_vip.1 }}"
+  when: var_adcstackmembers|length == 2
+
+- name: ADC2 - DEBUG var_external_ip_configuration += VIPs
+  debug:
+    msg: "
+    var_external_ip_configuration = {{ var_external_ip_configuration }}
+    "
+  when: var_adcstackmembers|length == 2
+
+- name: ADC2 - UPDATE vNIC External as a pool member of external LB
+  delegate_to: localhost
+  azure_rm_networkinterface:
+    resource_group: "rg-{{ extra_hubplatform_name }}"
+    name: "nic-{{ extra_hubplatform_name }}-{{ var_adcstackmembers[1].name }}-external"
+    virtual_network: "vnet-{{ extra_hubplatform_name }}"
+    subnet_name: "net-{{ extra_hubplatform_name }}-external"
+    create_with_security_group: false
+    tags: "{{ extra_platform_tags }}
+    Name=nic-{{ extra_hubplatform_name }}-{{ var_adcstackmembers[1].name }}-external
+    owner={{ owner }}"
+    ip_configurations: "{{ var_external_ip_configuration }}"
+  when: var_adcstackmembers|length == 2
+
+
+
+
+...

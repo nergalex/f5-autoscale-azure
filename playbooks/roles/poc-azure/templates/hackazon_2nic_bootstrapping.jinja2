@@ -1,0 +1,19 @@
+{# VAR #}
+{% set update_centos %}
+yum update -x WA* -y{% endset %}
+{% set install_hackazon %}
+yum install -y docker && yum install -y telnet && service docker start && docker pull mutzel/all-in-one-hackazon && docker run --name hackazon -d -p 80:80 mutzel/all-in-one-hackazon{% endset %}
+{% set network_script_eth0 %}
+{{ extra_subnet_mgt_on_premise }} via {{ extra_gw_mgt }} dev eth0\n{% endset %}
+{% set save_network_script_eth0 %}
+echo -e '{{ network_script_eth0 }}' >> /etc/sysconfig/network-scripts/route-eth0{% endset %}
+{% set execute_add_route_eth0 %}
+ip route add {{ extra_subnet_mgt_on_premise }} via {{ extra_gw_mgt }} dev eth0{% endset %}
+{% set network_script_eth1 %}
+10.0.0.0/8 via {{ extra_gw_internal }} dev eth1\n{% endset %}
+{% set save_network_script_eth1 %}
+echo -e '{{ network_script_eth1 }}' >> /etc/sysconfig/network-scripts/route-eth1{% endset %}
+{% set execute_add_route_eth1 %}
+ip route add 10.0.0.0/8 via {{ extra_gw_internal }} dev eth1{% endset %}
+{# RETURN #}
+{{ execute_add_route_eth0 }}; {{ save_network_script_eth0 }}; {{ execute_add_route_eth1 }}; {{ save_network_script_eth1 }}

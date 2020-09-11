@@ -1,0 +1,38 @@
+--- 
+extra_bigip_target: ltm1.lab
+extra_ip_mgt: 10.102.0.143
+extra_admin_user: admin
+extra_admin_password: F5N3tworks
+extra_template: template_http_bigiq.jinja2
+extra_tenant: tenant_POC_BT1
+extra_application: myapp
+extra_vip: 10.42.10.101
+extra_pool:
+  servicePort: 8080
+  members:
+  - 10.1.20.20
+  - 10.1.20.21
+  - 10.1.20.22
+
+
+#bigiq
+extra_ip_mgt: 212.121.177.199
+extra_port_mgt: 10443
+extra_admin_user: admin
+extra_admin_password: F5N3tworks
+
+#bigip
+extra_bigip_target: bigip2.lab
+
+extra_template: template_http_bigiq.jinja2
+
+# app
+extra_tenant: tenant_POC_BT5
+extra_application: myapp51
+# only used for add
+extra_vip: 10.45.1.131
+extra_pool:
+  servicePort: 8090
+  members:
+  - 10.44.1.208
+

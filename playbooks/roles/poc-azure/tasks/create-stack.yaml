@@ -1,0 +1,143 @@
+- name: Create stack
+  delegate_to: localhost
+  azure_rm_deployment:
+    resource_group: "rg-{{ extra_platform_name }}"
+    deployment_name: "{{ extra_stack_name }}"
+    location: "{{ extra_location }}"
+    deployment_mode: "incremental"
+    # template_link: "https://raw.githubusercontent.com/F5Networks/f5-azure-arm-templates/v6.0.3.0/supported/standalone/3nic/existing-stack/payg/azuredeploy.json"
+    template_link: "https://raw.githubusercontent.com/nergalex/PublicCloudBuilder/master/template/F5/Azure/standalone_3nic_existing-stack_payg.json"
+    wait_for_deployment_completion: true
+    parameters:
+      adminUsername:
+        value: 'cyber'
+      authenticationType:
+        value: 'sshPublicKey'
+      adminPasswordOrKey:
+        value: "{{ key_data }}"
+      adminPassword:
+        value: "{{ extra_adminPassword }}"
+      dnsLabel:
+        value: "{{ extra_instance_name }}-{{ extra_platform_name }}"
+      instanceName:
+        value: "{{ extra_instance_name }}"
+      instanceType:
+        value: 'Standard_DS3_v2'
+      imageName:
+        value: "{{ extra_image_name }}"
+      bigIpVersion:
+        value: "latest"
+      numberOfExternalIps:
+        value: 1
+      vnetName:
+        value: "vnet-{{ extra_platform_name }}"
+      vnetResourceGroupName:
+        value: "rg-{{ extra_platform_name }}"
+      mgmtSubnetName:
+        value: "net-{{ extra_platform_name }}-management"
+      mgmtIpAddress:
+        value: "{{ extra_ip_mgt }}"
+      externalSubnetName:
+        value: "net-{{ extra_platform_name }}-external"
+      externalIpAddressRangeStart:
+        value: "{{ extra_ip_external_start }}"
+      internalSubnetName:
+        value: "net-{{ extra_platform_name }}-internal"
+      internalIpAddress:
+        value: "{{ extra_ip_internal }}"
+      avSetChoice:
+        value: "CREATE_NEW"
+      declarationUrl:
+        value: 'https://clouddocs.f5.com/products/extensions/f5-appsvcs-extension/3.5.1/'
+      ntpServer:
+        value: "0.pool.ntp.org"
+      timeZone:
+        value: "UTC"
+      customImage:
+        value: "OPTIONAL"
+      restrictedSrcAddress:
+        value: "*"
+      tagValues:
+        value: "{'Name':'{{ extra_instance_name }}', 'owner':'{{ owner }}', 'zone':'{{ extra_zone_name }}'}"
+      allowUsageAnalytics:
+        value: "Yes"
+  when: extra_stack_profile == 'f5-standalone-3nic-existing-stack-payg'
+
+- name: Create stack
+  delegate_to: localhost
+  azure_rm_deployment:
+    resource_group: "rg-{{ extra_platform_name }}"
+    deployment_name: "{{ extra_stack_name }}"
+    location: "{{ extra_location }}"
+    deployment_mode: "incremental"
+    template_link: "https://raw.githubusercontent.com/F5Networks/f5-azure-arm-templates/v6.0.4.0/supported/failover/same-net/via-lb/3nic/existing-stack/payg/azuredeploy.json"
+    wait_for_deployment_completion: true
+    parameters:
+      adminUsername:
+        value: 'cyber'
+      authenticationType:
+        value: 'sshPublicKey'
+      adminPasswordOrKey:
+        value: "{{ key_data }}"
+      dnsLabel:
+        value: "{{ extra_instance_name }}-{{ extra_platform_name }}"
+      instanceName:
+        value: "{{ extra_instance_name }}"
+      instanceType:
+        value: 'Standard_DS3_v2'
+      imageName:
+        value: "{{ extra_image_name }}"
+      bigIpVersion:
+        value: "latest"
+      numberOfExternalIps:
+        value: 1
+      vnetName:
+        value: "vnet-{{ extra_platform_name }}"
+      vnetResourceGroupName:
+        value: "rg-{{ extra_platform_name }}"
+      mgmtSubnetName:
+        value: "net-{{ extra_platform_name }}-management"
+      mgmtIpAddressRangeStart:
+        value: "{{ extra_ip_mgt_start }}"
+      externalSubnetName:
+        value: "net-{{ extra_platform_name }}-external"
+      externalIpSelfAddressRangeStart:
+        value: "{{ extra_ip_external_start }}"
+      externalIpAddressRangeStart:
+        value: "{{ extra_ip_self_external_start }}"
+      internalSubnetName:
+        value: "net-{{ extra_platform_name }}-internal"
+      internalIpAddressRangeStart:
+        value: "{{ extra_ip_internal_start }}"
+      enableNetworkFailover:
+        value: "Yes"
+      internalLoadBalancerType:
+        value: "All-protocol"
+      internalLoadBalancerProbePort:
+        value: "3456"
+      declarationUrl:
+        value: 'https://clouddocs.f5.com/products/extensions/f5-appsvcs-extension/3.5.1/'
+      ntpServer:
+        value: "0.pool.ntp.org"
+      timeZone:
+        value: "UTC"
+      customImage:
+        value: "OPTIONAL"
+      restrictedSrcAddress:
+        value: "*"
+      tagValues:
+        value: "{'Name':'{{ extra_instance_name }}', 'owner':'{{ owner }}', 'zone':'{{ extra_zone_name }}'}"
+      allowUsageAnalytics:
+        value: "Yes"
+  when: extra_stack_profile == 'f5-failover-same_net-via_lb-3nic-existing-stack-payg'
+
+- name: Post-deployment
+  debug:
+    msg: "
+    Set an admin password for BIG-IP VE: in tmsh, type 'modify auth password admin';
+    "
+  when:
+        - extra_stack_profile == 'f5-standalone-3nic-existing-stack-payg'
+        - extra_stack_profile == 'f5-failover-same_net-via_lb-3nic-existing-stack-payg'
+
+...

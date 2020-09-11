@@ -1,0 +1,18 @@
+---
+- name: Add all hosts
+  add_host:
+    groups: "vmss-{{ extra_platform_name }}-{{ extra_vmss_name }}"
+    hostname: "{{ extra_vmss_name }}-{{ item.instance_id }}"
+    ansible_host: "{{ item.management }}"
+    ansible_port: 22
+    ansible_ssh_private_key_file: "{{ extra_ssh_private_key }}"
+  loop: "{{ stats_self_ips }}"
+  # https://docs.ansible.com/ansible/latest/user_guide/intro_inventory.html#intro-inventory
+
+
+
+
+
+
+
+...
