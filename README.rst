@@ -62,7 +62,7 @@ Demo
 - Automate an Application deployment
 .. raw:: html
 
-    <a href="http://www.youtube.com/watch?v=p1rfhssaE_U"><img src="http://img.youtube.com/vi/p1rfhssaE_U/0.jpg" width="900" height="500" title="Automate an Application deployment" alt="Automate an Application deployment"></a>
+    <a href="http://www.youtube.com/watch?v=p1rfhssaE_U"><img src="http://img.youtube.com/vi/p1rfhssaE_U/0.jpg" width="700" height="400" title="Automate an Application deployment" alt="Automate an Application deployment"></a>
 
 - Scale Out VMSS NGINX+ managed by NGINX Controller
 .. raw:: html
