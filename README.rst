@@ -48,6 +48,7 @@ Ecosystem
 Design Consideration
 *********************
 Ths article is to propose a solution based on:
+
 - native cloud provider autoscaling feature
 - F5 Controller products for Out Of Band management and Analytics
 - customer eco-system products
