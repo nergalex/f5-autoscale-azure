@@ -145,8 +145,8 @@ Custom module for azure_preview_modules
 --------
 Copy modules below to ``/etc/ansible/roles/azure.azure_preview_modules/library/``:
 
-- ``azure_rm_autoscale.py`` (if not `fix <https://github.com/ansible-collections/azure/issues/120>` applied)
-- ``azure_rm_networkinterface_vmss_info.py``_
+- ``azure_rm_autoscale.py`` (if not `fix <https://github.com/ansible-collections/azure/issues/120>`_ applied)
+- ``azure_rm_networkinterface_vmss_info.py``
 - ``azure_rm_virtualmachinescaleset_2NIC.py``
 - ``azure_rm_virtualmachinescalesetinstance_info.py``
 
