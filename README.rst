@@ -328,6 +328,7 @@ Extra variable                                  Description                     
 ``extra_vmss_name``                             logical vmss_name                               ``awaf``
 ``extra_webhook_email``                         e-mail address                                  ``admin@acme.com``
 ``extra_webhook_vm_name``                       VM name                                         ``autoscale-f5``
+==============================================  =============================================   =========================================================
 
 ## NGINX south | NGINX ADC
 Create and launch a workflow template ``wf-create_vmss_nginx_adc`` that include those Job templates in this order:
