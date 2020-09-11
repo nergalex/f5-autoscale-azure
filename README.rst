@@ -1,6 +1,5 @@
 Autoscale F5 products in Microsoft Azure
 ==================================================
-
 .. contents:: Table of Contents
 
 Summary
