@@ -87,7 +87,8 @@ Demo
 Pre-requisites
 ==============
 Ansible Tower
-*********************
+##############
 ----------
 virtualenv
 ----------
+
