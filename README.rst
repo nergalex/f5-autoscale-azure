@@ -90,3 +90,14 @@ Ansible Tower
 ##############
 virtualenv
 **************
+Create a virtualenv, follow
+`Tower admin guide <https://docs.ansible.com/ansible-tower/latest/html/administration/tipsandtricks.html#preparing-a-new-custom-virtualenv>`_
+Install ansible >= 2.9
+
+.. code:: bash
+
+    $ sudo yum groupinstall -y "development tools"
+    $ sudo virtualenv /var/lib/awx/venv/my_env
+    $ sudo /var/lib/awx/venv/my_env/bin/pip install python-memcached psutil
+    $ sudo /var/lib/awx/venv/my_env/bin/pip install -U ansible
+
