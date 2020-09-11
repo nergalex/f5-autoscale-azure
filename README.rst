@@ -1,3 +1,11 @@
+=====  =====  ======
+  A      B    A or B
+=====  =====  ======
+False  False  False
+True   False  True
+=====  =====  ======
+
+
 Autoscale F5 products in Microsoft Azure
 ==================================================
 
@@ -94,6 +102,7 @@ Install ansible >= 2.9
 
 
 Ensure that your virtualenv have the rights 755, else:
+
 .. code:: bash
     $ chmod 755 -R /var/lib/awx/venv/my_env
 
@@ -128,31 +137,35 @@ If ``azure-mgmt-compute`` < ``10.0.0`` then use last update from azure_preview_m
         skip_azure_sdk: false
 
 
-### Custom module for azure_preview_modules
-Copy modules below to `/etc/ansible/roles/azure.azure_preview_modules/library/`
-* `azure_rm_autoscale.py` (if not [fix](https://github.com/ansible-collections/azure/issues/120) applied)
-* `azure_rm_networkinterface_vmss_info.py`
-* `azure_rm_virtualmachinescaleset_2NIC.py`
-* `azure_rm_virtualmachinescalesetinstance_info.py`
+Custom module for azure_preview_modules
+--------
+Copy modules below to ``/etc/ansible/roles/azure.azure_preview_modules/library/``
+- ``azure_rm_autoscale.py`` (if not `fix <https://github.com/ansible-collections/azure/issues/120>` applied)
+- ``azure_rm_networkinterface_vmss_info.py``_
+- ``azure_rm_virtualmachinescaleset_2NIC.py``
+- ``azure_rm_virtualmachinescalesetinstance_info.py``
 
-### VMSS credential
+VMSS credential
+--------
 Create custom credential `cred_NGINX` to manage access to VMs in VMSS
 
 | CREDENTIAL TYPE | USERNAME      | SSH PRIVATE KEY     | SIGNED SSH CERTIFICATE         | PRIVILEGE ESCALATION METHOD    |
 | ------------- | ------------- | ------------- | ------------- | ------------- |
-| `Machine` | `my_VM_admin_user` | `my_VM_admin_user_key` | `my_VM_admin_user_CRT` | `sudo` |
+| ``Machine`` | ``my_VM_admin_user`` | ``my_VM_admin_user_key`` | ``my_VM_admin_user_CRT`` | ``sudo`` |
 
 # Engineering
 ## Code
-* Deployment is based on `workflow template`. Example: `workflow template`=`wf-create_create_edge_security_inbound` ;
-* A `workflow template` includes multiple `job template`. Example: `job template`=`poc-azure_create_hub_edge_security_inbound`
-* A `job template` have an associated `playbook`. Example: `playbook`=`playbooks/poc-azure.yaml`
-* A `playbook` launch a `play` in a `role`. Example: `role`=`poc-azure`
-```yaml
-- hosts: localhost
-  gather_facts: no
-  roles:
-    - role: poc-azure
+- Deployment is based on ``workflow template``. Example: ``workflow template``=``wf-create_create_edge_security_inbound`` ;
+- A ``workflow template`` includes multiple ``job template``. Example: ``job template``=``poc-azure_create_hub_edge_security_inbound``
+- A ``job template`` have an associated ``playbook``. Example: ``playbook``=``playbooks/poc-azure.yaml``
+- A ``playbook`` launch a ``play`` in a ``role``. Example: ``role``=``poc-azure``
+
+.. code:: yaml
+
+    - hosts: localhost
+      gather_facts: no
+      roles:
+        - role: poc-azure
 ```
 * A `play` is an `extra variable` named `activity` and set in each `job template`. Example: `create_hub_edge_security_inbound`
 * The specified `play` (or `activity`) is launched by the `main.yaml` task located in the role `tasks/main.yaml`
