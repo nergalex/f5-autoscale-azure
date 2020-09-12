@@ -196,18 +196,28 @@ In ``poc-azure_create_hub_edge_security_inbound``, remove ``virtual_network_gate
 Job template                                    playbook                                        activity                                        inventory                                       limit                                           credential
 ==============================================  =============================================   =============================================   =============================================   =============================================   =============================================
 ``poc-azure_create_hub_edge_security_inbound``  ``playbooks/poc-azure.yaml``                    ``create_hub_edge_security_inbound``            ``my_project``                                  ``localhost``                                   ``my_azure_credential``
-``poc-azure_create-vm-nginx_unit``              ``playbooks/poc-azure.yaml``                    ``create-vm-nginx_unit``                        ``my_project``                                  ``localhost``                                   ``my_azure_credential``
-``poc-nginx_onboarding_system_vm``              ``playbooks/poc-nginx_vm.yaml``                 ``onboarding_system``                           ``localhost``                                   ``localhost``                                   ``cred_NGINX``
-``poc-nginx_onboarding_nginx_unit``             ``playbooks/poc-azure.yaml``                    ``onboarding_nginx_unit``                       ``localhost``                                   ``localhost``                                   ``cred_NGINX``
 ==============================================  =============================================   =============================================   =============================================   =============================================   =============================================
 
 ==============================================  =============================================   =============================================
 Extra variable                                  Description                                     Example
 ==============================================  =============================================   =============================================
-``extra_availability_zone``                     availability zones                              ``[1, 2]``
+``extra_platform_name``                         logical platform_name                           ``myPlatform``
+``extra_platform_tags``                         logical platform_tags                           ``environment=DMO ...``
+``extra_project_name``                          logical project_name                            ``CloudBuilderf5``
+``extra_location``                              region                                          ``eastus2``
+``extra_vnet_address_prefixes``                                                                 ``10.100.0.0/16``
+``extra_management_subnet_address_prefix``                                                      ``10.100.0.0/24``
+``extra_nginx_subnet_address_prefix``                                                           ``10.100.1.0/24``
 ``extra_external_subnet_address_prefix``        BIG-IP dataplane subnet                         ``10.100.2.0/24``
-``extra_internal_subnet_address_prefix``        NGINX South dataplane subnet                    ``10.100.2.0/24``
+``extra_internal_subnet_address_prefix``        NGINX South dataplane subnet                    ``10.100.3.0/24``
+``extra_pan_dataplane_subnet_address_prefix``   NG FW dataplane subnet                          ``10.100.5.0/24``
 ``extra_gateway_subnet_address_prefix``         Subnet dedicated to VPN GW                      ``10.100.255.0/24``
+``extra_subnet_mgt_on_premise``                 Cross management zone via VPN GW                ``10.0.0.0/24``
+``extra_lb_external_vip``                       ILB VIP to load balance AWAF VMSS               ``10.0.0.0/24``
+``extra_lb_pan_vip``                            ILB VIP to load balance PAN VMSS                ``10.0.0.0/24``
+``extra_lb_internal_vip``                       ILB VIP to load balance API GW VMSS             ``10.0.0.0/24``
+``extra_vip_address_list_awaf``                 Subnet list to route via AWAF VMSS              ``10.0.0.0/24``
+``extra_vip_address_list_nginx_second_line``    Subnet list to route via API GW VMSS            ``10.0.0.0/24``
 ==============================================  =============================================   =============================================
 
 2. NGINX App Protect - WAF
@@ -541,11 +551,12 @@ Extra variable                                  Description                     
 ``extra_vmss_name``                             vmss_name. Set by webhook                       ``awaf``
 ==============================================  =============================================   ================================================================================================================================================================================================================
 
-BIG-IP + Consul
+BIG-IP standalone + Consul
 #####################
 
 - **Benefit**: no limitation on BIG-IP instances in a VMSS
-- **Pain point**: time to be operational after all Application Services deployed
+- **Benefit**: no master VM backup needed, configuration is created from AS3 Template stored in a Git and Service Requests input stored in Consul
+- negative point: time to be operational after all Application Services deployed
 
 :kbd:`ToDo`
 

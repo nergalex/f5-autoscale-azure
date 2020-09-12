@@ -15,7 +15,7 @@
   loop: "{{ list_vmss_instances.instances }}"
   register: result
   until: result.instances.0.provisioning_state == "Succeeded"
-  retries: 10
+  retries: 20
   delay: 30
   ignore_errors: yes
 
