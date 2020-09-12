@@ -1,0 +1,123 @@
+---
+# https://unit.nginx.org/installation/centos
+- name: COPY unit repo
+  copy:
+    content: "{{ lookup('template', 'unit_repo.conf') }}"
+    dest: /etc/yum.repos.d/unit.repo
+
+- name: INSTALL package
+  package:
+    name:
+      - python3
+      - python-setuptools
+      - git
+      - unit
+      - unit-python36
+    state: present
+
+- name: Start service NGINX Unit, if not started
+  service:
+    name: unit
+    state: started
+
+- name: CREATE webhook apps directoty
+  file:
+    path: /etc/webhook-apps
+    state: directory
+
+- name: CREATE App directoty
+  file:
+    path: "/etc/webhook-apps/{{ faas_app_name }}/"
+    state: directory
+
+- name: FETCH git project
+  git:
+    repo: '{{ faas_app_repo }}'
+    dest: "/etc/webhook-apps/{{ faas_app_name }}/"
+
+- name: COPY webhook.ini
+  copy:
+    content: "{{ lookup('template', 'webhook.ini') }}"
+    dest: "/etc/webhook-apps/{{ faas_app_name }}/webhook.ini"
+
+- name: INSTALL virtualenv
+  pip:
+    name:
+      - pip
+      - virtualenv
+    state: forcereinstall
+    executable: pip3.6
+
+- name: INSTALL requirements
+  pip:
+    requirements: "/etc/webhook-apps/{{ faas_app_name }}/requirements.txt"
+    virtualenv: /etc/webhook-apps/venv
+    virtualenv_python: python3.6
+    virtualenv_command: /usr/local/bin/virtualenv
+
+- name: SET var_bundle
+  set_fact:
+    var_bundle: "{{ lookup('template', 'bundle.pem') }}"
+
+- name: CMP_OUTPUT
+  debug:
+    msg: "{{ var_bundle }}"
+
+# https://unit.nginx.org/configuration/#ssl-tls-and-certificates
+- name: CREATE a new TLS bundle in Unit TLS store
+  uri:
+    unix_socket: /var/run/unit/control.sock
+    url: "http://{{ inventory_hostname }}/certificates/bundle_webhook"
+    method: PUT
+    body: "{{ var_bundle }}"
+    body_format: json
+    timeout: 60
+    status_code: 200, 202, 400
+    validate_certs: false
+
+
+- name: GET current TLS bundle in Unit TLS store
+  uri:
+    unix_socket: /var/run/unit/control.sock
+    url: "http://{{ inventory_hostname }}/certificates/bundle_webhook/chain/0/"
+    method: GET
+    return_content: yes
+    status_code: 200
+    validate_certs: false
+  register: crt_json
+
+- debug:
+    var: crt_json
+
+- name: GET current Unit configuration
+  uri:
+    unix_socket: /var/run/unit/control.sock
+    url: "http://{{ inventory_hostname }}/config/"
+    method: GET
+    return_content: yes
+    status_code: 200
+    validate_certs: false
+  register: config_json
+
+- debug:
+    var: config_json
+
+# https://unit.nginx.org/configuration/#python
+- name: UPDATE Unit configuration
+  uri:
+    unix_socket: /var/run/unit/control.sock
+    url: "http://{{ inventory_hostname }}/config/"
+    method: PUT
+    headers:
+        Content-Type: application/json
+    body: "{{ lookup('template', 'nginx_unit_webhook.json') }}"
+    body_format: json
+    timeout: 60
+    status_code: 200, 202
+    validate_certs: false
+  register: config_json
+
+- debug:
+    var: config_json
+
+...

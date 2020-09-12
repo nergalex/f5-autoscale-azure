@@ -1,0 +1,46 @@
+- name: INIT var_current_vms
+  set_fact:
+    var_current_vms: []
+
+- name: SET var_current_vms
+  set_fact:
+    var_current_vms: "{{ var_current_vms }} + [ '{{ extra_vmss_name }}-{{ item.instance_id }}' ]"
+  loop: "{{ stats_self_ips }}"
+
+- name: GET VMSS instances in NGINX Controller configuration
+  uri:
+    url: "https://{{ extra_nginx_controller_ip }}/api/v1/infrastructure/locations/{{ extra_vmss_name | lower }}/instances"
+    method: GET
+    headers:
+      "Cookie": "{{ stats_session }}"
+    return_content: yes
+    validate_certs: no
+    status_code: 200
+  register: var_current_instances
+
+- name: INIT var_instances_to_delete
+  set_fact:
+    var_instances_to_delete: []
+
+- name: SET var_instances_to_delete
+  set_fact:
+    var_instances_to_delete: "{{ var_instances_to_delete }} + [ {
+      'name': '{{ item.metadata.name }}',
+    }]"
+  loop: "{{ var_current_instances.json['items'] }}"
+  when: item.metadata.name not in var_current_vms
+
+- debug:
+    var: var_instances_to_delete
+
+- name: DELETE Instance
+  uri:
+    url: "https://{{ extra_nginx_controller_ip }}/api/v1/infrastructure/locations/{{ extra_vmss_name | lower }}/instances/{{ item.name }}"
+    method: DELETE
+    headers:
+      "Cookie": "{{ stats_session }}"
+    return_content: yes
+    validate_certs: no
+    status_code: 200, 204
+  loop: "{{ var_instances_to_delete }}"
+

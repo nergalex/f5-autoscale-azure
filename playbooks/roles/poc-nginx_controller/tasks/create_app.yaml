@@ -1,0 +1,18 @@
+- name: CREATE an App
+  uri:
+    url: "https://{{ extra_nginx_controller_ip }}/api/v1/services/environments/env_{{ extra_app.environment | lower }}/apps/app_{{ extra_app.name | lower }}.{{ extra_app.domain | lower }}"
+    method: PUT
+    headers:
+      "Content-Type": "application/json"
+      "Cookie": "{{ stats_session }}"
+    body: "{{ lookup('template','application.json') }}"
+    body_format: json
+    return_content: yes
+    validate_certs: no
+    status_code: 200, 201, 202
+
+
+
+
+
+

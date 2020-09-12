@@ -1,0 +1,22 @@
+{
+    "listeners": {
+        "*:80": {
+            "pass": "applications/flask_app"
+        },
+        "*:443": {
+            "pass": "applications/flask_app",
+            "tls": {
+                "certificate": "bundle_webhook"
+            }
+        }
+    },
+    "applications": {
+        "flask_app": {
+            "type": "python 3",
+            "working_directory": "/etc/webhook-apps/{{ faas_app_name }}",
+            "home": "/etc/webhook-apps/venv",
+            "path": "/etc/webhook-apps/{{ faas_app_name }}",
+            "module": "webhook"
+        }
+    }
+}

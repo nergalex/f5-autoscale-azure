@@ -1,0 +1,18 @@
+- name: CREATE a Location
+  uri:
+    url: "https://{{ extra_nginx_controller_ip }}/api/v1/infrastructure/locations/{{ extra_vmss_name | lower }}"
+    method: PUT
+    headers:
+      "Content-Type": "application/json"
+      "Cookie": "{{ stats_session }}"
+    body: "{{ lookup('template','location.json') }}"
+    body_format: json
+    return_content: yes
+    validate_certs: no
+    status_code: 200, 201
+
+
+
+
+
+

@@ -1,0 +1,19 @@
+- name: SET extra_environments
+  set_fact:
+    extra_environments: [ "north_{{ extra_app.environment }}", "south_{{ extra_app.environment }}"]
+
+- name: Create Environment
+  uri:
+    url: "https://{{ extra_nginx_controller_ip }}/api/v1/services/environments/env_{{ item | lower }}"
+    method: PUT
+    headers:
+      "Content-Type": "application/json"
+      "Cookie": "{{ stats_session }}"
+    body: "{{ lookup('template','environment.json') }}"
+    body_format: json
+    return_content: yes
+    validate_certs: no
+    status_code: 200, 201, 202
+  loop: "{{ extra_environments }}"
+
+

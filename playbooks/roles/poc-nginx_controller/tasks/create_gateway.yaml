@@ -1,0 +1,72 @@
+- name: Create Environment
+  uri:
+    url: "https://{{ extra_nginx_controller_ip }}/api/v1/services/environments/env_{{ item | lower }}"
+    method: PUT
+    headers:
+      "Content-Type": "application/json"
+      "Cookie": "{{ stats_session }}"
+    body: "{{ lookup('template','environment.json') }}"
+    body_format: json
+    return_content: yes
+    validate_certs: no
+    status_code: 200, 201, 202
+  loop: "{{ extra_environments }}"
+
+- name: GET N+ instances ID
+  uri:
+    url: "https://{{ extra_nginx_controller_ip }}/api/v1/infrastructure/locations/{{ item.location }}/instances"
+    method: GET
+    headers:
+      "Content-Type": "application/json"
+      "Cookie": "{{ stats_session }}"
+    body_format: json
+    return_content: yes
+    validate_certs: no
+    status_code: 200
+  loop: "{{ extra_app.gateways }}"
+  register: gateways
+
+- debug:
+    var: gateways
+
+- name: INIT var_instance_ids
+  set_fact:
+    var_instance_ids: []
+
+- name: SET var_instance_ids
+  set_fact:
+    var_instance_ids: "{{ var_instance_ids }} + [ {
+      'name': '{{ item.json['items'].0.metadata.name }}',
+      'location': '{{ extra_app.gateways[index].location }}',
+      'ref': '{{ item.json['items'].0.metadata.ref }}'
+    }]"
+  loop: "{{ gateways.results }}"
+  loop_control:
+    index_var: index
+  when: item.json['items'].0.metadata.name == extra_app.gateways[index].instance
+  # search by VMSS name:
+  # when: item.currentStatus.hostname is search("{{ extra_app.gateways[index].instance }}.*")
+
+- debug:
+    var: var_instance_ids
+
+- name: SET var_env_prefix
+  set_fact:
+    var_env_prefix: "env_"
+
+- name: Create Gateways
+  uri:
+    url: "https://{{ extra_nginx_controller_ip }}/api/v1/services/environments/{{ var_env_prefix }}{{extra_app.environment | lower}}/gateways/gw_{{extra_app.name | lower}}"
+    method: PUT
+    headers:
+      "Content-Type": "application/json"
+      "Cookie": "{{ stats_session }}"
+    body: "{{ lookup('template','gateway.json') }}"
+    body_format: json
+    return_content: yes
+    validate_certs: no
+    status_code: 200, 201, 202
+
+
+
+

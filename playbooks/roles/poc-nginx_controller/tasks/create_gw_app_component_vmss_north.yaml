@@ -1,0 +1,130 @@
+- name: SET var_env_prefix
+  set_fact:
+    var_env_prefix: "env_north_"
+
+- name: Create CRT
+  uri:
+    url: "https://{{ extra_nginx_controller_ip }}/api/v1/services/environments/{{ var_env_prefix }}{{ extra_app.environment | lower }}/certs/crt_{{ extra_app.name | lower }}"
+    method: PUT
+    headers:
+      "Content-Type": "application/json"
+      "Cookie": "{{ stats_session }}"
+    body: "{{ lookup('template','cert.json') }}"
+    body_format: json
+    return_content: yes
+    validate_certs: no
+    status_code: 200, 201, 202
+
+- name: SET var_tls_enabled
+  set_fact:
+    var_tls_enabled: yes
+
+- name: INIT var_vmss_instances
+  set_fact:
+    var_vmss_instances: []
+
+- name: SET var_vmss_instances
+  set_fact:
+    var_vmss_instances: "{{ var_vmss_instances }} + [ '{{ extra_vmss_name_nginx_first_line }}-{{ item.instance_id }}' ]"
+  loop: "{{ stats_self_ips }}"
+  loop_control:
+    index_var: cur_index
+
+- name: GET N+ instances ID
+  uri:
+    url: "https://{{ extra_nginx_controller_ip }}/api/v1/infrastructure/locations/{{ extra_vmss_name_nginx_first_line | lower }}/instances"
+    method: GET
+    headers:
+      "Content-Type": "application/json"
+      "Cookie": "{{ stats_session }}"
+    body_format: json
+    return_content: yes
+    validate_certs: no
+    status_code: 200
+  register: instances
+
+- debug:
+    var: instances.json['items']
+
+- name: INIT var_instance_ids
+  set_fact:
+    var_instance_ids: []
+
+- name: SET var_instance_ids
+  set_fact:
+    var_instance_ids: "{{ var_instance_ids }} + [ {
+      'name': '{{ item.metadata.name }}',
+      'location': '{{ extra_vmss_name_nginx_first_line | lower }}',
+      'ref': '{{ item.metadata.ref }}'
+    }]"
+  loop: "{{ instances.json['items'] }}"
+  loop_control:
+    index_var: index
+  when: item.metadata.name in var_vmss_instances
+
+- debug:
+    var: var_instance_ids
+
+- debug:
+    var: var_env_prefix
+
+- debug:
+    var: extra_app.environment | lower
+
+- name: Create Gateway
+  uri:
+    url: "https://{{ extra_nginx_controller_ip }}/api/v1/services/environments/{{ var_env_prefix }}{{ extra_app.environment | lower }}/gateways/gw_{{ extra_app.name | lower }}"
+    method: PUT
+    headers:
+      "Content-Type": "application/json"
+      "Cookie": "{{ stats_session }}"
+    body: "{{ lookup('template','gateway.json') }}"
+    body_format: json
+    return_content: yes
+    validate_certs: no
+    status_code: 200, 201, 202
+
+
+
+- name: CREATE an App
+  uri:
+    url: "https://{{ extra_nginx_controller_ip }}/api/v1/services/environments/{{ var_env_prefix }}{{ extra_app.environment | lower }}/apps/app_{{ extra_app.name | lower }}.{{ extra_app.domain | lower }}"
+    method: PUT
+    headers:
+      "Content-Type": "application/json"
+      "Cookie": "{{ stats_session }}"
+    body: "{{ lookup('template','application.json') }}"
+    body_format: json
+    return_content: yes
+    validate_certs: no
+    status_code: 200, 201, 202
+
+
+
+
+
+
+- name: CREATE a Component
+  uri:
+    url: "https://{{ extra_nginx_controller_ip }}/api/v1/services/environments/{{ var_env_prefix }}{{ extra_app.environment | lower }}/apps/app_{{ extra_app.name | lower }}.{{ extra_app.domain | lower }}/components/adc_{{ item.name | lower }}"
+    method: PUT
+    headers:
+      "Content-Type": "application/json"
+      "Cookie": "{{ stats_session }}"
+    body: "{{ lookup('template','component_adc.json') }}"
+    body_format: json
+    return_content: yes
+    validate_certs: no
+    status_code: 200, 201, 202
+  loop: "{{ extra_app.components }}"
+  when: item.type == "adc" and item.name == "north"
+
+- name: SET Consul - Source of Truth
+  consul_kv:
+    scheme: "{{extra_consul_agent_scheme}}"
+    validate_certs: no
+    host: "{{extra_consul_agent_ip}}"
+    port: "{{extra_consul_agent_port}}"
+    key: "{{ extra_project_name }}/{{ extra_vmss_name_nginx_first_line }}/{{ extra_app.name }}"
+    value: "{{ extra_app }}"
+

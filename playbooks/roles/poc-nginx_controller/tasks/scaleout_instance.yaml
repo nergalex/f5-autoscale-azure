@@ -1,0 +1,52 @@
+---
+- name: INIT var_current_vms = list of VM name on dataplane
+  set_fact:
+    var_current_vms: []
+
+- name: SET var_current_vms
+  set_fact:
+    var_current_vms: "{{ var_current_vms }} + [ '{{ extra_vmss_name }}-{{ item.instance_id }}' ]"
+  loop: "{{ stats_self_ips }}"
+
+- name: GET VMSS instances in NGINX Controller configuration
+  uri:
+    url: "https://{{ extra_nginx_controller_ip }}/api/v1/infrastructure/locations/{{ extra_vmss_name | lower }}/instances"
+    method: GET
+    headers:
+      "Cookie": "{{ stats_session }}"
+    return_content: yes
+    validate_certs: no
+    status_code: 200
+  register: result_current_instances
+
+- name: INIT var_current_instances
+  set_fact:
+    var_current_instances: []
+
+- name: SET var_current_instances = list of known VM name by NGINX Controller
+  set_fact:
+    var_current_instances: "{{ var_current_instances }} + [ '{{ item.metadata.name }}' ]"
+  loop: "{{ result_current_instances.json['items'] }}"
+
+- name: INIT list_nodes_to_onboard
+  set_fact:
+    list_nodes_to_onboard: []
+
+- name: SET list_nodes_to_onboard = list of management IP address of UNknown VM name by NGINX Controller
+  set_fact:
+    list_nodes_to_onboard: "{{ list_nodes_to_onboard }} + [ '{{ item.1.management }}' ]"
+  loop: "{{ var_current_vms | zip(stats_self_ips) | list }}"
+  when: item.0 not in var_current_instances
+
+- debug:
+    var: list_nodes_to_onboard
+
+- name: "Artifact for Tower Workflows"
+  set_stats:
+    data:
+      stats_list_nodes_current:  "{{ var_current_vms }}"
+      stats_list_nodes_to_onboard:  "{{ list_nodes_to_onboard }}"
+
+
+
+...

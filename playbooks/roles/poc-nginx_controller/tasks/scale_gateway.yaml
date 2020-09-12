@@ -1,0 +1,63 @@
+- name: GET Consul - all Apps hoted on VMSS North
+  consul_kv:
+    scheme: "{{extra_consul_agent_scheme}}"
+    validate_certs: no
+    host: "{{extra_consul_agent_ip}}"
+    port: "{{extra_consul_agent_port}}"
+    recurse: yes
+    key: "{{ extra_project_name }}/{{ extra_vmss_name }}/"
+  register: result_apps
+
+- debug:
+    var: result_apps.data
+
+- name: INIT var_current_apps
+  set_fact:
+    var_current_apps: []
+
+- name: SET var_current_apps
+  set_fact:
+    var_current_apps: "{{ var_current_apps }} + [ {{ item.Value }} ]"
+  loop: "{{ result_apps.data }}"
+
+- name: SET var_tls_enabled
+  set_fact:
+    var_tls_enabled: yes
+  when: extra_env_prefix | lower == "env_north_"
+
+- name: INIT var_instance_ids
+  set_fact:
+    var_instance_ids: []
+
+- name: SET var_instance_ids
+  set_fact:
+    var_instance_ids: "{{ var_instance_ids }} + [ {
+      'ref': '/infrastructure/locations/{{ extra_vmss_name }}/instances/{{ extra_vmss_name }}-{{ item.instance_id }}'
+    }]"
+  loop: "{{ stats_self_ips }}"
+
+- debug:
+    var: var_instance_ids
+
+- debug:
+    var: var_current_apps
+
+- name: UPDATE Gateway
+  uri:
+    url: "https://{{ extra_nginx_controller_ip }}/api/v1/services/environments/{{ extra_env_prefix | lower }}{{ item.environment | lower }}/gateways/gw_{{ item.name | lower }}"
+    method: PUT
+    headers:
+      "Content-Type": "application/json"
+      "Cookie": "{{ stats_session }}"
+    body: "{{ lookup('template','scale_gateway.json') }}"
+    body_format: json
+    return_content: yes
+    validate_certs: no
+    status_code: 200, 201, 202
+  loop: "{{ var_current_apps }}"
+
+
+
+
+
+
