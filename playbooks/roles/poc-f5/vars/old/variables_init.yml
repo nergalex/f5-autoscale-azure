@@ -1,7 +1,0 @@
---- 
-extra_ip_mgt: 10.102.0.136
-extra_admin_user: admin
-extra_admin_password: F5N3tworks
-extra_template: template_init.jinja2
-extra_tenant: tenant_POC_BT11
-extra_init_vip: 203.0.113.11
