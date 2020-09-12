@@ -184,7 +184,7 @@ Consul by Hashicorp
 ###################
 Refer to this `article <https://github.com/nergalex/f5-sslo-category#consul>`_ to install Consul.
 
-Deploy an replica of Edge Security
+Deploy a replica of Edge Security
 ==================================================
 1. Azure - network components
 ###############
