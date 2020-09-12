@@ -481,6 +481,7 @@ Extra variable                                  Description                     
 ``extra_app`` structure, also stored as is in Consul:
 
 .. code:: yaml
+
     extra_app:
       backend_servers:
         - 10.12.1.5
