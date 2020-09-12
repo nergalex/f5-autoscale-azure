@@ -223,22 +223,20 @@ Job template                                            objective               
 ``poc-nginx_onboarding_system``                         Configure system variable                           ``playbooks/poc-azure.yaml``                        ``onboarding_system``                           ``localhost``                                   ``localhost``                                   ``cred_NGINX``
 ``poc-nginx_app_protect_install``                       Install NGINX App Protect                           ``playbooks/poc-nginx_app_protect_install.yaml``                                                    ``localhost``                                   ``localhost``                                   ``cred_NGINX``
 ``poc-azure_create-vmss-autoscale``                     Create an autoscale policy                          ``playbooks/poc-azure.yaml``                        ``create-vmss-autoscale``                       ``my_project``                                  ``localhost``                                   ``my_vmss_credential``
-``poc-nginx_controller-login``                          GET authentication token                            ``playbooks/poc-nginx_controller.yaml``             ``login``                                       ``localhost``                                   ``localhost``                                   ``cred_NGINX``
-``poc-nginx_controller-create_location_vmss_north``     Create a location = VMSS object                     ``playbooks/poc-nginx_controller.yaml``             ``ocreate_location_vmss_north``                 ``localhost``                                   ``localhost``                                   ``cred_NGINX``
-``poc-nginx_managed_nginx``                             Install NGINX COntroller agent                      ``playbooks/ppoc-nginx.yaml``                       ``managed_nginx``                               ``localhost``                                   ``localhost``                                   ``cred_NGINX``
+``poc-nginx_controller-login``                          GET authentication token                            ``playbooks/poc-nginx_controller.yaml``             ``login``                                       ``localhost``                                   ``localhost``
+``poc-nginx_controller-create_location_vmss_north``     Create a location = VMSS object                     ``playbooks/poc-nginx_controller.yaml``             ``ocreate_location_vmss_north``                 ``localhost``                                   ``localhost``
+``poc-nginx_managed_nginx``                             Install NGINX COntroller agent                      ``playbooks/poc-nginx.yaml``                       ``managed_nginx``                               ``localhost``                                   ``localhost``                                   ``cred_NGINX``
 =====================================================   =============================================       =================================================   =============================================   =============================================   =============================================   =============================================
 
 ==============================================  =============================================   =========================================================
 Extra variable                                  Description                                     Example
 ==============================================  =============================================   =========================================================
-
-
-
-
-
-
-
-``extra_app_protect_repo``                      repo that stores NAP install scripts            ``http://10.0.0.19``
+``extra_nginx_controller_api_key``                                                              ``ea7e703f94239cf7f5b9fa40f99bbfca``
+``extra_nginx_controller_install_path``                                                         ``1.4/install/controller/``
+``extra_nginx_controller_ip``                                                                   ``10.0.0.38``
+``extra_nginx_controller_password``                                                             ``Cha4ngMe!``
+``extra_nginx_controller_username``                                                             ``admin@acme.com``
+``extra_nginx_licence_dir``                                                                     ``/etc/ansible/roles/nginxinc.nginx/files/license``
 ``extra_availability_zone``                     availability zones                              ``[1, 2]``
 ``extra_dataplane_subnet_address_mask``         eth1 subnet mask                                ``24``
 ``extra_elb_management_name``                   ELB for outbound connection during install      ``outbound-management-vmss-nginx-external``
@@ -254,17 +252,12 @@ Extra variable                                  Description                     
 ``extra_vm_size``                               VM type                                         ``Standard_DS3_v2``
 ``extra_vmss_capacity``                         initial vmss_capacity                           `2``
 ``extra_vmss_name``                             logical vmss_name                               ``nginxwaf``
-``nginx_rpm_version``                           Nginx+ version to install                       ``20``
 ``extra_platform_name``                         logical platform_name                           ``myPlatform``
 ``extra_platform_tags``                         logical platform_tags                           ``environment=DMO ...``
 ``extra_project_name``                          logical project_name                            ``CloudBuilderf5``
 ``extra_route_prefix_on_premise``               cross management subnet                         ``10.0.0.0/24``
 ``extra_subnet_dataplane_name``                 logical name for eth1 subnet                    ``nginx``
-``extra_template_nginx_conf``                   jinja2 template for nginx.conf                  ``nginx_app_protect.conf``
 ``extra_template_route``                        jinja2 template for persistent route            ``system_route_persistent-default_via_dataplane.conf``
-``extra_app_protect_monitor_ip``                IP address of Kibana server                     ``10.0.0.20``
-``extra_nginx_key``                             NGINX+ private key (PEM format)                 ``-----BEGIN  ... KEY-----``
-``extra_nginx_crt``                             NGINX+ certificate (PEM format)                 ``-----BEGIN  ... CERTIFICATE-----``
 ``extra_webhook_email``                         e-mail address                                  ``admin@acme.com``
 ``extra_webhook_vm_name``                       VM name                                         ``autoscale-f5``
 ==============================================  =============================================   =========================================================
@@ -331,55 +324,55 @@ Extra variable                                  Description                     
 
 4. NGINX+ - API GW
 ###############
-Create and launch a workflow template ``wf-create_vmss_nginx_apigw`` that includes those Job templates in this order:
+Create and launch a workflow template ``wf-create_managed_vmss_nginx_apigw`` that includes those Job templates in this order:
 
-=====================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
-Job template                                            objective                                           playbook                                        activity                                        inventory                                       limit                                           credential
-=====================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
-``poc-azure_create-vmss-nginx-2NIC_2LB``                Create VMSS                                         ``playbooks/poc-azure.yaml``                    ``create-vmss-nginx-2NIC_2LB``                  ``my_project``                                  ``localhost``                                   ``my_azure_credential``
-``poc-azure_set-vmss-master_vm``                        Set a Master VM                                     ``playbooks/poc-azure.yaml``                    ``set-vmss-master_vm``                          ``my_project``                                  ``localhost``                                   ``my_azure_credential``
-``poc-azure_create-vmss-extension-nginx_from_repo``     Set script to install NGINX+                        ``playbooks/poc-azure.yaml``                    ``create-vmss-extension-nginx_from_repo``     ``my_project``                                  ``localhost``                                   ``my_azure_credential``
-``poc-azure_get-vmss-facts``                            Get VM IPs from VMSS                                ``playbooks/poc-azure.yaml``                    ``get-vmss-facts``                              ``my_project``                                  ``localhost``                                   ``my_azure_credential``
-``poc-nginx_onboarding_system``                         Configure system variable                           ``playbooks/poc-azure.yaml``                    ``onboarding_system``                           ``localhost``                                   ``localhost``                                   ``cred_NGINX``
-``poc-nginx_onboarding_nginx_adc``                      Configure NGINX App Protect                         ``playbooks/poc-azure.yaml``                    ``onboarding_nginx_app_protect``                ``localhost``                                   ``localhost``                                   ``cred_NGINX``
-``poc-azure_create-vmss-autoscale``                     Create an autoscale policy                          ``playbooks/poc-azure.yaml``                    ``create-vmss-autoscale``                       ``my_project``                                  ``localhost``                                   ``my_vmss_credential``
-``poc-nginx_onboarding_nginx_sync_step1_master``        Configure Master VM as a Master NGINX               ``playbooks/poc-nginx_master.yaml``             ``onboarding_nginx_sync_step1_master``          ``localhost``                                   ``localhost``                                   ``cred_NGINX``
-``poc-nginx_onboarding_nginx_sync_step2_slaves``        Configure Slaves VM as a Slave NGINX                ``playbooks/poc-nginx_slaves.yaml``             ``onboarding_nginx_sync_step2_slaves``          ``localhost``                                   ``localhost``                                   ``cred_NGINX``
-``poc-nginx_onboarding_nginx_sync_step3_master``        Copy from Master VM to Slave NGINX                  ``playbooks/poc-nginx_master.yaml``             ``onboarding_nginx_sync_step3_master``          ``localhost``                                   ``localhost``                                   ``cred_NGINX``
-=====================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+=====================================================   =============================================       =================================================   =============================================   =============================================   =============================================   =============================================
+Job template                                            objective                                           playbook                                            activity                                        inventory                                       limit                                           credential
+=====================================================   =============================================       =================================================   =============================================   =============================================   =============================================   =============================================
+``poc-azure_create-vmss-nginx-2NIC_1LB``                Create VMSS                                         ``playbooks/poc-azure.yaml``                        ``create-vmss-nginx-2NIC_1LB``                  ``my_project``                                  ``localhost``                                   ``my_azure_credential``
+``poc-azure_set-vmss-master_vm``                        Set a Master VM                                     ``playbooks/poc-azure.yaml``                        ``set-vmss-master_vm``                          ``my_project``                                  ``localhost``                                   ``my_azure_credential``
+``poc-azure_get-vmss-facts``                            Get VM IPs from VMSS                                ``playbooks/poc-azure.yaml``                        ``get-vmss-facts``                              ``my_project``                                  ``localhost``                                   ``my_azure_credential``
+``poc-nginx_onboarding_system``                         Configure system variable                           ``playbooks/poc-azure.yaml``                        ``onboarding_system``                           ``localhost``                                   ``localhost``                                   ``cred_NGINX``
+``poc-nginx_app_protect_install``                       Install NGINX App Protect                           ``playbooks/poc-nginx_app_protect_install.yaml``                                                    ``localhost``                                   ``localhost``                                   ``cred_NGINX``
+``poc-azure_create-vmss-autoscale``                     Create an autoscale policy                          ``playbooks/poc-azure.yaml``                        ``create-vmss-autoscale``                       ``my_project``                                  ``localhost``                                   ``my_azure_credential``
+``poc-nginx_controller-login``                          GET authentication token                            ``playbooks/poc-nginx_controller.yaml``             ``login``                                       ``localhost``                                   ``localhost``
+``poc-nginx_controller-create_location_vmss_north``     Create a location = VMSS object                     ``playbooks/poc-nginx_controller.yaml``             ``ocreate_location_vmss_north``                 ``localhost``                                   ``localhost``
+``poc-nginx_managed_nginx``                             Install NGINX COntroller agent                      ``playbooks/poc-nginx.yaml``                       ``managed_nginx``                               ``localhost``                                   ``localhost``                                   ``cred_NGINX``
+=====================================================   =============================================       =================================================   =============================================   =============================================   =============================================   =============================================
 
 ==============================================  =============================================   =========================================================
 Extra variable                                  Description                                     Example
 ==============================================  =============================================   =========================================================
-``extra_app_protect_monitor_ip``                Kibana for NGINX App Protect                    ``10.0.0.20``
-``extra_app_protect_repo``                      repo that stores NAP install scripts            ``http://10.0.0.19``
+``extra_nginx_controller_api_key``                                                              ``ea7e703f94239cf7f5b9fa40f99bbfca``
+``extra_nginx_controller_install_path``                                                         ``1.4/install/controller/``
+``extra_nginx_controller_ip``                                                                   ``10.0.0.38``
+``extra_nginx_controller_password``                                                             ``Cha4ngMe!``
+``extra_nginx_controller_username``                                                             ``admin@acme.com``
+``extra_nginx_licence_dir``                                                                     ``/etc/ansible/roles/nginxinc.nginx/files/license``
 ``extra_availability_zone``                     availability zones                              ``[1, 2]``
 ``extra_dataplane_subnet_address_mask``         eth1 subnet mask                                ``24``
-``extra_elb_management_name``                   ELB for outbound connection during install      ``outbound-management-vmss-nginx-external``
-``extra_gw_dataplane``                          eth1 GW                                         ``10.100.1.1``
+``extra_elb_management_name``                   ELB for outbound connection during install      ``outbound-management-vmss-nginx-internal``
+``extra_gw_dataplane``                          eth1 GW                                         ``10.100.4.1``
 ``extra_gw_management``                         eth0 GW                                         ``10.100.0.1``
 ``extra_key_data``                              admin CRT                                       ``-----BEGIN  ... CERTIFICATE-----``
-``extra_lb_dataplane_name``                     LB name for dataplane traffic                   ``external``
-``extra_lb_dataplane_type``                     LB type for dataplane traffic                   ``elb``
+``extra_lb_dataplane_name``                     LB name for dataplane traffic                   ``internal``
+``extra_lb_dataplane_type``                     LB type for dataplane traffic                   ``ilb``
 ``extra_location``                              region                                          ``eastus2``
 ``extra_offer``                                 OS                                              ``CentOS``
 ``extra_publisher``                             OS distrib                                      ``OpenLogic``
 ``extra_sku``                                   OS distrib version                              ``7.4``
 ``extra_vm_size``                               VM type                                         ``Standard_DS3_v2``
 ``extra_vmss_capacity``                         initial vmss_capacity                           `2``
-``extra_vmss_name``                             logical vmss_name                               ``nginxwaf``
-``nginx_rpm_version``                           Nginx+ version to install                       ``20``
+``extra_vmss_name``                             logical vmss_name                               ``nginxapigw``
 ``extra_platform_name``                         logical platform_name                           ``myPlatform``
 ``extra_platform_tags``                         logical platform_tags                           ``environment=DMO ...``
 ``extra_project_name``                          logical project_name                            ``CloudBuilderf5``
 ``extra_route_prefix_on_premise``               cross management subnet                         ``10.0.0.0/24``
 ``extra_subnet_dataplane_name``                 logical name for eth1 subnet                    ``nginx``
-``extra_template_nginx_conf``                   jinja2 template for nginx.conf                  ``nginx_adc.conf``
 ``extra_template_route``                        jinja2 template for persistent route            ``system_route_persistent-default_via_mgmtplane.conf``
-``extra_app_protect_monitor_ip``                IP address of Kibana server                     ``10.0.0.20``
 ``extra_webhook_email``                         e-mail address                                  ``admin@acme.com``
 ``extra_webhook_vm_name``                       VM name                                         ``autoscale-f5``
-``extra_vip_address_list_nginx_second_line``    routed subnet for VIP                           ``[10.100.11.0/24]``
+``extra_vip_address_list_nginx_second_line``    IPtable - route VIP subnet to system            ``["10.100.11.0/24"]``
 ==============================================  =============================================   =========================================================
 
 5. NGINX Unit - webhook
@@ -567,29 +560,36 @@ Create and launch a workflow template ``wf-scale_out_nginx_controller_north`` th
 Job template                                            objective                                           playbook                                        activity                                        inventory                                       limit                                           credential
 =====================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
 ``poc-azure_get-vmss-facts-credential_set``             Get info of current BIG-IP VMSS                     ``playbooks/poc-azure.yaml``                    ``get-vmss_hub-facts``                          ``my_project``                                  ``localhost``                                   ``my_azure_credential``
-``poc-f5_do_scale_out``                                 Onboard BIG-IP                                      ``playbooks/poc-f5.yaml``                       ``do_vmss_device-group``                                  ``my_project``                                  ``localhost``                                   ``my_azure_credential``
-``poc-f5-bigiq_discover_scale_out``                     Discover BIG-IP by BIG-IQ                           ``playbooks/poc-f5.yaml``                       ``bigiq_vmss_device-group_discover``                                  ``my_project``                                  ``localhost``                                   ``my_azure_credential``
+``poc-nginx_controller-login``                          GET authentication token                            ``playbooks/poc-nginx_controller.yaml``         ``login``                                       ``localhost``                                   ``localhost``
+``poc-nginx_controller-scaleout_instance``              GET knwon instance name from NGINX Controller       ``playbooks/poc-nginx_controller.yaml``         ``scaleout_instance``                           ``localhost``                                   ``localhost``
+``poc-nginx_scale_out_onboarding_system``               Configure system, route                             ``playbooks/poc-nginx_controller.yaml``         ``scale_out_onboarding_system``                 ``localhost``                                   ``localhost``                                   ``cred_NGINX``
+``poc-nginx_scale_out_app_protect_install``             Install NGINX App Protect                           ``playbooks/poc-nginx_controller.yaml``         ``scale_out_app_protect_install``               ``localhost``                                   ``localhost``                                   ``cred_NGINX``
+``poc-nginx_managed_nginx``                             Install NGINX Controller agent                      ``playbooks/poc-nginx.yaml``                       ``managed_nginx``                               ``localhost``                                   ``localhost``                                   ``cred_NGINX``
+``poc-nginx_controller-scale_gateway``                  Update instance list in gateway objects            ``playbooks/poc-nginx_controller.yaml``         ``scale_out_app_protect_install``               ``localhost``                                   ``localhost``                                   ``cred_NGINX``
 =====================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
 
 ==============================================  =============================================   ================================================================================================================================================================================================================
 Extra variable                                  Description                                     Example
 ==============================================  =============================================   ================================================================================================================================================================================================================
-``extra_admin_password``                        BIG-IP password                                 ``Ch4ngeMe!``
-``extra_admin_user``                            BIG-IP admin user                               ``admin``
-``extra_bigiq_admin_password``                  BIG-IQ password                                 ``Ch4ngeMe!``
-``extra_bigiq_admin_user``                      BIG-IQ user                                     ``admin``
-``extra_bigiq_ip_mgt``                          BIG-IQ ip mgt                                   ``10.0.0.27``
-``extra_bigiq_port_mgt``                        BIG-IQ mgt port                                 ``443``
-``extra_dataplane_subnet_address_mask``         eth1 subnet mask                                ``24``
-``extra_device_modules``                        List of modules to discover by BIG-IQ           ``ltm,asm,security_shared``
-``extra_gw_dataplane``                          eth1 GW                                         ``10.100.2.1``
+``extra_consul_agent_ip``                       Consul server IP                                ``10.100.0.60``
+``extra_consul_agent_port``                     Consul server port                              ``8500``
+``extra_consul_agent_scheme``                   Consul server scheme                            ``http``
+``extra_env_prefix``                            prefix to define North ou South NGINX gateway   ``env_north_``
+``extra_gw_dataplane``                          eth1 GW                                         ``10.100.1.1``
 ``extra_gw_management``                         eth0 GW                                         ``10.100.0.1``
 ``extra_location``                              region. Set by webhook                          ``eastus2``
+``extra_nginx_controller_api_key``                                                              ``ea7e703f94239cf7f5b9fa40f99bbfca``
+``extra_nginx_controller_install_path``                                                         ``1.4/install/controller/``
+``extra_nginx_controller_ip``                                                                   ``10.0.0.38``
+``extra_nginx_controller_password``                                                             ``Cha4ngMe!``
+``extra_nginx_controller_username``                                                             ``admin@acme.com``
+``extra_nginx_licence_dir``                                                                     ``/etc/ansible/roles/nginxinc.nginx/files/license``
 ``extra_platform_name``                         logical platform_name                           ``myPlatform``
-``extra_port_mgt``                              management port on BIG-IP                       ``443``
 ``extra_project_name``                          logical project_name                            ``CloudBuilderf5``
 ``extra_route_prefix_on_premise``               cross management subnet                         ``10.0.0.0/24``
-``extra_vmss_name``                             vmss_name. Set by webhook                       ``awaf``
+``extra_template_route``                        jinja2 template for persistent route            ``system_route_persistent-default_via_dataplane.conf``
+``extra_vmss_id``                               VMSS ID                  ``system_route_persistent-default_via_dataplane.conf``
+``extra_vmss_name``                             vmss_name. Set by webhook                       ``nginxwaf``
 ==============================================  =============================================   ================================================================================================================================================================================================================
 
 Scale In
