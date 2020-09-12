@@ -1,0 +1,29 @@
+---
+- name: INSTALL package
+  package:
+    name: policycoreutils-python
+    state: present
+
+- name: CREATE install directory
+  file:
+    path: /root/nginx-controller
+    state: directory
+
+- name: CREATE self-registerd instance on NGINX Controller
+  get_url:
+    url: "https://{{ extra_nginx_controller_ip }}:8443/{{ extra_nginx_controller_install_path }}"
+    validate_certs: no
+    dest: /root/nginx-controller/install.sh
+    mode: '0700'
+
+- name: INSTALL NGINX Controller agent
+  shell: "API_KEY='{{ extra_nginx_controller_api_key }}' ./install.sh  -y --insecure --instance-name {{ inventory_hostname }}  --location-name {{ extra_vmss_name | lower }}"
+  args:
+    chdir: /root/nginx-controller/
+  register: result_install
+
+- name: SHOW output
+  debug:
+    var: result_install
+
+...
