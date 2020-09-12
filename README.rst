@@ -564,6 +564,46 @@ Job template                                            objective               
 ``poc-nginx_controller-scaleout_instance``              GET knwon instance name from NGINX Controller       ``playbooks/poc-nginx_controller.yaml``         ``scaleout_instance``                           ``localhost``                                   ``localhost``
 ``poc-nginx_scale_out_onboarding_system``               Configure system, route                             ``playbooks/poc-nginx_controller.yaml``         ``scale_out_onboarding_system``                 ``localhost``                                   ``localhost``                                   ``cred_NGINX``
 ``poc-nginx_scale_out_app_protect_install``             Install NGINX App Protect                           ``playbooks/poc-nginx_controller.yaml``         ``scale_out_app_protect_install``               ``localhost``                                   ``localhost``                                   ``cred_NGINX``
+``poc-nginx_managed_nginx``                             Install NGINX Controller agent                      ``playbooks/poc-nginx.yaml``                    ``managed_nginx``                               ``localhost``                                   ``localhost``                                   ``cred_NGINX``
+``poc-nginx_controller-scale_gateway``                  Update instance list in gateway objects             ``playbooks/poc-nginx_controller.yaml``         ``scale_out_app_protect_install``               ``localhost``                                   ``localhost``                                   ``cred_NGINX``
+=====================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+
+==============================================  =============================================   ================================================================================================================================================================================================================
+Extra variable                                  Description                                     Example
+==============================================  =============================================   ================================================================================================================================================================================================================
+``extra_consul_agent_ip``                       Consul server IP                                ``10.100.0.60``
+``extra_consul_agent_port``                     Consul server port                              ``8500``
+``extra_consul_agent_scheme``                   Consul server scheme                            ``http``
+``extra_env_prefix``                            prefix to define North ou South NGINX gateway   ``env_north_``
+``extra_gw_dataplane``                          eth1 GW                                         ``10.100.1.1``
+``extra_gw_management``                         eth0 GW                                         ``10.100.0.1``
+``extra_location``                              region. Set by webhook                          ``eastus2``
+``extra_nginx_controller_api_key``                                                              ``ea7e703f94239cf7f5b9fa40f99bbfca``
+``extra_nginx_controller_install_path``                                                         ``1.4/install/controller/``
+``extra_nginx_controller_ip``                                                                   ``10.0.0.38``
+``extra_nginx_controller_password``                                                             ``Cha4ngMe!``
+``extra_nginx_controller_username``                                                             ``admin@acme.com``
+``extra_nginx_licence_dir``                                                                     ``/etc/ansible/roles/nginxinc.nginx/files/license``
+``extra_platform_name``                         logical platform_name                           ``myPlatform``
+``extra_project_name``                          logical project_name                            ``CloudBuilderf5``
+``extra_route_prefix_on_premise``               cross management subnet                         ``10.0.0.0/24``
+``extra_template_route``                        jinja2 template for persistent route            ``system_route_persistent-default_via_dataplane.conf``
+``extra_vmss_id``                               VMSS ID                                         ``system_route_persistent-default_via_dataplane.conf``
+``extra_vmss_name``                             vmss_name. Set by webhook                       ``nginxwaf``
+==============================================  =============================================   ================================================================================================================================================================================================================
+
+Scale Out - NGINX API GW
+*****************************
+Create and launch a workflow template ``wf-scale_out_nginx_controller_north`` that includes those Job templates in this order:
+
+=====================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+Job template                                            objective                                           playbook                                        activity                                        inventory                                       limit                                           credential
+=====================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+``poc-azure_get-vmss-facts-credential_set``             Get info of current BIG-IP VMSS                     ``playbooks/poc-azure.yaml``                    ``get-vmss_hub-facts``                          ``my_project``                                  ``localhost``                                   ``my_azure_credential``
+``poc-nginx_controller-login``                          GET authentication token                            ``playbooks/poc-nginx_controller.yaml``         ``login``                                       ``localhost``                                   ``localhost``
+``poc-nginx_controller-scaleout_instance``              GET knwon instance name from NGINX Controller       ``playbooks/poc-nginx_controller.yaml``         ``scaleout_instance``                           ``localhost``                                   ``localhost``
+``poc-nginx_scale_out_onboarding_system``               Configure system, route                             ``playbooks/poc-nginx_controller.yaml``         ``scale_out_onboarding_system``                 ``localhost``                                   ``localhost``                                   ``cred_NGINX``
+``poc-nginx_scale_out_app_protect_install``             Install NGINX App Protect                           ``playbooks/poc-nginx_controller.yaml``         ``scale_out_app_protect_install``               ``localhost``                                   ``localhost``                                   ``cred_NGINX``
 ``poc-nginx_managed_nginx``                             Install NGINX Controller agent                      ``playbooks/poc-nginx.yaml``                       ``managed_nginx``                               ``localhost``                                   ``localhost``                                   ``cred_NGINX``
 ``poc-nginx_controller-scale_gateway``                  Update instance list in gateway objects            ``playbooks/poc-nginx_controller.yaml``         ``scale_out_app_protect_install``               ``localhost``                                   ``localhost``                                   ``cred_NGINX``
 =====================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
