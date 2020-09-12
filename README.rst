@@ -561,7 +561,7 @@ Job template                                            objective               
 =====================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
 ``poc-azure_get-vmss-facts-credential_set``             Get info of current BIG-IP VMSS                     ``playbooks/poc-azure.yaml``                    ``get-vmss_hub-facts``                          ``my_project``                                  ``localhost``                                   ``my_azure_credential``
 ``poc-nginx_controller-login``                          GET authentication token                            ``playbooks/poc-nginx_controller.yaml``         ``login``                                       ``localhost``                                   ``localhost``
-``poc-nginx_controller-scaleout_instance``              GET knwon instance name from NGINX Controller       ``playbooks/poc-nginx_controller.yaml``         ``scaleout_instance``                           ``localhost``                                   ``localhost``
+``poc-nginx_controller-scaleout_instance``              GET known instance name from NGINX Controller       ``playbooks/poc-nginx_controller.yaml``         ``scaleout_instance``                           ``localhost``                                   ``localhost``
 ``poc-nginx_scale_out_onboarding_system``               Configure system, route                             ``playbooks/poc-nginx_controller.yaml``         ``scale_out_onboarding_system``                 ``localhost``                                   ``localhost``                                   ``cred_NGINX``
 ``poc-nginx_scale_out_app_protect_install``             Install NGINX App Protect                           ``playbooks/poc-nginx_controller.yaml``         ``scale_out_app_protect_install``               ``localhost``                                   ``localhost``                                   ``cred_NGINX``
 ``poc-nginx_managed_nginx``                             Install NGINX Controller agent                      ``playbooks/poc-nginx.yaml``                    ``managed_nginx``                               ``localhost``                                   ``localhost``                                   ``cred_NGINX``
@@ -588,20 +588,20 @@ Extra variable                                  Description                     
 ``extra_project_name``                          logical project_name                            ``CloudBuilderf5``
 ``extra_route_prefix_on_premise``               cross management subnet                         ``10.0.0.0/24``
 ``extra_template_route``                        jinja2 template for persistent route            ``system_route_persistent-default_via_dataplane.conf``
-``extra_vmss_id``                               VMSS ID                                         ``system_route_persistent-default_via_dataplane.conf``
+``extra_vmss_id``                               VMSS ID                                         ``/subscriptions/.../resourceGroups/rg-TotalInbound/providers/Microsoft.Compute/virtualMachineScaleSets/nginxapigw``
 ``extra_vmss_name``                             vmss_name. Set by webhook                       ``nginxwaf``
 ==============================================  =============================================   ================================================================================================================================================================================================================
 
 Scale Out - NGINX API GW
 *****************************
-Create and launch a workflow template ``wf-scale_out_nginx_controller_north`` that includes those Job templates in this order:
+Create and launch a workflow template ``wf-scale_out_nginx_controller_south`` that includes those Job templates in this order:
 
 =====================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
 Job template                                            objective                                           playbook                                        activity                                        inventory                                       limit                                           credential
 =====================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
 ``poc-azure_get-vmss-facts-credential_set``             Get info of current BIG-IP VMSS                     ``playbooks/poc-azure.yaml``                    ``get-vmss_hub-facts``                          ``my_project``                                  ``localhost``                                   ``my_azure_credential``
 ``poc-nginx_controller-login``                          GET authentication token                            ``playbooks/poc-nginx_controller.yaml``         ``login``                                       ``localhost``                                   ``localhost``
-``poc-nginx_controller-scaleout_instance``              GET knwon instance name from NGINX Controller       ``playbooks/poc-nginx_controller.yaml``         ``scaleout_instance``                           ``localhost``                                   ``localhost``
+``poc-nginx_controller-scaleout_instance``              GET known instance name from NGINX Controller       ``playbooks/poc-nginx_controller.yaml``         ``scaleout_instance``                           ``localhost``                                   ``localhost``
 ``poc-nginx_scale_out_onboarding_system``               Configure system, route                             ``playbooks/poc-nginx_controller.yaml``         ``scale_out_onboarding_system``                 ``localhost``                                   ``localhost``                                   ``cred_NGINX``
 ``poc-nginx_scale_out_app_protect_install``             Install NGINX App Protect                           ``playbooks/poc-nginx_controller.yaml``         ``scale_out_app_protect_install``               ``localhost``                                   ``localhost``                                   ``cred_NGINX``
 ``poc-nginx_managed_nginx``                             Install NGINX Controller agent                      ``playbooks/poc-nginx.yaml``                    ``managed_nginx``                               ``localhost``                                   ``localhost``                                   ``cred_NGINX``
@@ -614,8 +614,8 @@ Extra variable                                  Description                     
 ``extra_consul_agent_ip``                       Consul server IP                                ``10.100.0.60``
 ``extra_consul_agent_port``                     Consul server port                              ``8500``
 ``extra_consul_agent_scheme``                   Consul server scheme                            ``http``
-``extra_env_prefix``                            prefix to define North ou South NGINX gateway   ``env_north_``
-``extra_gw_dataplane``                          eth1 GW                                         ``10.100.1.1``
+``extra_env_prefix``                            prefix to define North ou South NGINX gateway   ``env_south_``
+``extra_gw_dataplane``                          eth1 GW                                         ``10.100.4.1``
 ``extra_gw_management``                         eth0 GW                                         ``10.100.0.1``
 ``extra_location``                              region. Set by webhook                          ``eastus2``
 ``extra_nginx_controller_api_key``                                                              ``ea7e703f94239cf7f5b9fa40f99bbfca``
@@ -627,44 +627,39 @@ Extra variable                                  Description                     
 ``extra_platform_name``                         logical platform_name                           ``myPlatform``
 ``extra_project_name``                          logical project_name                            ``CloudBuilderf5``
 ``extra_route_prefix_on_premise``               cross management subnet                         ``10.0.0.0/24``
-``extra_template_route``                        jinja2 template for persistent route            ``system_route_persistent-default_via_dataplane.conf``
-``extra_vmss_id``                               VMSS ID                  ``system_route_persistent-default_via_dataplane.conf``
-``extra_vmss_name``                             vmss_name. Set by webhook                       ``nginxwaf``
+``extra_template_route``                        jinja2 template for persistent route            ``system_route_persistent-default_via_mgmtplane.conf``
+``extra_vmss_id``                               VMSS ID                                         ``/subscriptions/.../resourceGroups/rg-TotalInbound/providers/Microsoft.Compute/virtualMachineScaleSets/nginxapigw``
+``extra_vmss_name``                             vmss_name. Set by webhook                       ``nginxapigw``
 ==============================================  =============================================   ================================================================================================================================================================================================================
 
 Scale In
 *********
-Create and launch a workflow template ``wf-scale_in_bigip`` that includes those Job templates in this order:
+Create and launch a workflow template ``wf-scale_in_nginx_controller`` that includes those Job templates in this order:
 
 =====================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
 Job template                                            objective                                           playbook                                        activity                                        inventory                                       limit                                           credential
 =====================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
 ``poc-azure_get-vmss-facts-credential_set``             Get info of current BIG-IP VMSS                     ``playbooks/poc-azure.yaml``                    ``get-vmss_hub-facts``                          ``my_project``                                  ``localhost``                                   ``my_azure_credential``
-``poc-f5_bigiq_get_device_scale_in``                    Define deleted BIGIP from managed device list       ``playbooks/poc-f5.yaml``                       ``bigiq_get_device_scale_in``                   ``localhost``
-``poc-f5_bigiq_discover_scale_in``                      Remove BIG-IP from managed device list              ``playbooks/poc-f5.yaml``                       ``bigiq_discover_scale_in``                     ``localhost``
-``poc-f5_do_scale_in``                                  Onboard existing BIG-IP (cluster change)            ``playbooks/poc-f5.yaml``                       ``bigiq_discover_scale_in``                     ``localhost``
-``poc-f5_bigiq_revoke_scale_in``                        Remove BIG-IP from licence pool                     ``playbooks/poc-f5.yaml``                       ``bigiq_revoke_scale_in``                       ``localhost``
+``poc-nginx_controller-login``                          GET authentication token                            ``playbooks/poc-nginx_controller.yaml``         ``login``                                       ``localhost``                                   ``localhost``
+``poc-nginx_controller-scale_gateway``                  Update instance list in gateway objects             ``playbooks/poc-nginx_controller.yaml``         ``scale_out_app_protect_install``               ``localhost``                                   ``localhost``
+``poc-nginx_controller-scalein_instance``               Delete instance from NGINX Controller               ``playbooks/poc-nginx_controller.yaml``         ``scalein_instance``                            ``localhost``                                   ``localhost``
 =====================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
 
 ==============================================  =============================================   ================================================================================================================================================================================================================
 Extra variable                                  Description                                     Example
 ==============================================  =============================================   ================================================================================================================================================================================================================
-``extra_admin_password``                        BIG-IP password                                 ``Ch4ngeMe!``
-``extra_admin_user``                            BIG-IP admin user                               ``admin``
-``extra_bigiq_admin_password``                  BIG-IQ password                                 ``Ch4ngeMe!``
-``extra_bigiq_admin_user``                      BIG-IQ user                                     ``admin``
-``extra_bigiq_ip_mgt``                          BIG-IQ ip mgt                                   ``10.0.0.27``
-``extra_bigiq_port_mgt``                        BIG-IQ mgt port                                 ``443``
-``extra_dataplane_subnet_address_mask``         eth1 subnet mask                                ``24``
-``extra_device_modules``                        List of modules to discover by BIG-IQ           ``ltm,asm,security_shared``
-``extra_gw_dataplane``                          eth1 GW                                         ``10.100.2.1``
-``extra_gw_management``                         eth0 GW                                         ``10.100.0.1``
+``extra_consul_agent_ip``                       Consul server IP                                ``10.100.0.60``
+``extra_consul_agent_port``                     Consul server port                              ``8500``
+``extra_consul_agent_scheme``                   Consul server scheme                            ``http``
+``extra_env_prefix``                            prefix set by webhook                           ``env_south_``
 ``extra_location``                              region. Set by webhook                          ``eastus2``
+``extra_nginx_controller_api_key``                                                              ``ea7e703f94239cf7f5b9fa40f99bbfca``
+``extra_nginx_controller_install_path``                                                         ``1.4/install/controller/``
+``extra_nginx_controller_ip``                                                                   ``10.0.0.38``
+``extra_nginx_controller_password``                                                             ``Cha4ngMe!``
+``extra_nginx_controller_username``                                                             ``admin@acme.com``
 ``extra_platform_name``                         logical platform_name                           ``myPlatform``
-``extra_port_mgt``                              management port on BIG-IP                       ``443``
 ``extra_project_name``                          logical project_name                            ``CloudBuilderf5``
-``extra_route_prefix_on_premise``               cross management subnet                         ``10.0.0.0/24``
-``extra_vmss_name``                             vmss_name. Set by webhook                       ``awaf``
+``extra_vmss_id``                               VMSS ID                                         ``/subscriptions/.../resourceGroups/rg-TotalInbound/providers/Microsoft.Compute/virtualMachineScaleSets/nginxapigw``
+``extra_vmss_name``                             vmss_name. Set by webhook                       ``nginxapigw``
 ==============================================  =============================================   ================================================================================================================================================================================================================
-
-
