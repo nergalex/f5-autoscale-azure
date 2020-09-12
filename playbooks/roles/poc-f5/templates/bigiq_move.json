@@ -1,0 +1,4 @@
+{
+    "targetGlobalAppName": "{{ extra_app.name }}",
+    "componentAppReferencesToMove": [{"link": "{{ item.app_id }}"}]
+}

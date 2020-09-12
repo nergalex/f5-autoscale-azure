@@ -1,0 +1,13 @@
+[
+  {%- for device in stats_list_bigip_to_remove -%}
+  {%- for regkey in list_regkey -%}
+  {
+    "instance_id": "{{ device.instance_id }}",
+    "management": "{{ device.management }}",
+    "hostname": "{{ device.hostname }}",
+    "regkey": "{{ regkey }}"
+  }{%- if not loop.last -%},{% endif %}
+  {%- endfor -%}
+  {%- if not loop.last -%},{% endif %}
+  {%- endfor -%}
+]

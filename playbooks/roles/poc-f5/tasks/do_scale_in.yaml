@@ -1,0 +1,198 @@
+---
+# https://clouddocs.f5.com/products/extensions/f5-declarative-onboarding/latest/clustering-managing-devices.html
+# 2. Update the Device Group in the declaration with the new member list.
+- name: INIT var_failoverGroup_members
+  set_fact:
+    var_failoverGroup_members: []
+
+- name: SET var_failoverGroup_members
+  set_fact:
+    var_failoverGroup_members: "{{ var_failoverGroup_members + [ item.dataplane ] }}"
+  loop: "{{ stats_self_ips }}"
+
+- name: var_failoverGroup_members
+  debug:
+    msg: "var_failoverGroup_members: {{ var_failoverGroup_members }}"
+
+# ------------------------------- Master when slaves are present -------------------------------
+
+- name: do-vmss-master-2nic-awaf-BIGIQ.json
+  debug:
+    msg: "{{ lookup('template', 'do-vmss-master-2nic-awaf-BIGIQ.json') }}"
+  loop: "{{ stats_self_ips }}"
+  when:
+    - item.protect_from_scale_in == "True"
+    - stats_self_ips | length > 1
+
+- name: onboarding Master when slaves are present
+  uri:
+    url: https://{{ item.management }}/mgmt/shared/declarative-onboarding
+    method: "POST"
+    user: "admin"
+    password: "{{ extra_admin_password }}"
+    validate_certs: no
+    body: "{{ lookup('template', 'do-vmss-master-2nic-awaf-BIGIQ.json') }}"
+    body_format: json
+    timeout: 300
+    status_code: 200, 202
+  register: list_json_response
+  loop: "{{ stats_self_ips }}"
+  when:
+    - item.protect_from_scale_in == "True"
+    - stats_self_ips | length > 1
+
+- debug:
+    var: list_json_response
+
+# ------------------------------- Master when slaves are absent -------------------------------
+- name: do-vmss-master-2nic-awaf-BIGIQ.json
+  debug:
+    msg: "{{ lookup('template', 'do-vmss-master_alone-2nic-awaf-BIGIQ.json') }}"
+  loop: "{{ stats_self_ips }}"
+  when:
+    - item.protect_from_scale_in == "True"
+    - stats_self_ips | length == 1
+
+- name: onboarding Master when slaves are absent
+  uri:
+    url: https://{{ item.management }}/mgmt/shared/declarative-onboarding
+    method: "POST"
+    user: "admin"
+    password: "{{ extra_admin_password }}"
+    validate_certs: no
+    body: "{{ lookup('template', 'do-vmss-master_alone-2nic-awaf-BIGIQ.json') }}"
+    body_format: json
+    timeout: 300
+    status_code: 200, 202
+  register: list_json_response
+  loop: "{{ stats_self_ips }}"
+  when:
+    - item.protect_from_scale_in == "True"
+    - stats_self_ips | length == 1
+
+- debug:
+    var: list_json_response
+
+# ------------------------------- Slaves -------------------------------
+- pause:
+    prompt: "Please wait during DO deployment"
+    minutes: 1
+
+- name: SET var_failoverGroup_master_dataplane
+  set_fact:
+    var_failoverGroup_master_dataplane: "{{ stats_self_ips.0.dataplane }}"
+  loop: "{{ stats_self_ips }}"
+  when: item.protect_from_scale_in == "True"
+
+- name: onboarding Slaves
+  uri:
+    url: https://{{ item.management }}/mgmt/shared/declarative-onboarding
+    method: "POST"
+    user: "admin"
+    password: "{{ extra_admin_password }}"
+    validate_certs: no
+    body: "{{ lookup('template', 'do-vmss-slave-2nic-awaf-BIGIQ.json') }}"
+    body_format: json
+    timeout: 300
+    status_code: 200, 202
+  register: list_json_response
+  loop: "{{ stats_self_ips }}"
+  when: item.protect_from_scale_in != "True"
+
+- debug:
+    var: list_json_response
+
+# ------------------------------- wait -------------------------------
+- pause:
+    prompt: "Please wait during DO deployment"
+    minutes: 1
+
+- name: WAIT for onboarding IN PROGRESS
+  uri:
+    url: https://{{ item.item.management }}/mgmt/shared/declarative-onboarding/task/{{ item.json.id }}?statusCodes=experimental
+    method: GET
+    user: "admin"
+    password: "{{ extra_admin_password }}"
+    validate_certs: no
+    timeout: 60
+    status_code: 200
+  loop: "{{ list_json_response.results }}"
+  register: list_json_response_task_progress
+  when: item.skip_reason is undefined
+
+- debug:
+    var: list_json_response_task_progress
+
+- name: CHECK onboarding SUCCESS
+  uri:
+    url: https://{{ item.item.management }}/mgmt/shared/declarative-onboarding/task/{{ item.json.id }}?statusCodes=experimental
+    method: GET
+    user: "admin"
+    password: "{{ extra_admin_password }}"
+    validate_certs: no
+    timeout: 60
+    status_code: 200
+  register: list_json_response_task_success
+  loop: "{{ list_json_response.results }}"
+  when: item.skip_reason is undefined
+
+- debug:
+    var: list_json_response_task_success.results
+
+# ------------------------------- Device Group Member -------------------------------
+- name: SET var_master_ip_management
+  set_fact:
+    var_master_ip_management: "{{ item.management }}"
+  loop: "{{ stats_self_ips }}"
+  when:
+    - item.protect_from_scale_in == "True"
+
+- name: on standalone Master, remove absent slaves from device group list
+  bigip_device_group_member:
+    state: absent
+    device_group: "failoverGroup-awaf"
+    name: "{{ item.hostname }}"
+    provider:
+      server: "{{ var_master_ip_management }}"
+      user: "{{ extra_admin_user}}"
+      password: "{{ extra_admin_password }}"
+      validate_certs: no
+  loop: "{{ stats_list_bigip_to_remove }}"
+  when:
+    - stats_self_ips | length == 1
+
+# ------------------------------- Device Group -------------------------------
+- name: on standalone Master, remove device group
+  bigip_device_group:
+    state: absent
+    name: "failoverGroup-awaf"
+    provider:
+      server: "{{ item.management }}"
+      user: "{{ extra_admin_user}}"
+      password: "{{ extra_admin_password }}"
+      validate_certs: no
+  loop: "{{ stats_self_ips }}"
+  when:
+    - item.protect_from_scale_in == "True"
+    - stats_self_ips | length == 1
+
+# ------------------------------- Device Trust -------------------------------
+- name: on Master, remove absent slaves from device trust list
+  bigip_device_trust:
+    state: absent
+    peer_server: "{{ item.management }}"
+    peer_hostname: "{{ item.hostname }}"
+    peer_user: "{{ extra_admin_user}}"
+    peer_password: "{{ extra_admin_password }}"
+    provider:
+      server: "{{ var_master_ip_management }}"
+      user: "{{ extra_admin_user}}"
+      password: "{{ extra_admin_password }}"
+      validate_certs: no
+  loop: "{{ stats_list_bigip_to_remove }}"
+
+
+
+
+
+...

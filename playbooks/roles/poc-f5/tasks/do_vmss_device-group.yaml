@@ -1,0 +1,139 @@
+---
+- name: Create a management route
+  delegate_to: localhost
+  bigip_management_route:
+    name: route_management_on_premise
+    gateway: "{{ extra_gw_management }}"
+    network: "{{ extra_route_prefix_on_premise }}"
+    state: present
+    provider:
+      user: "{{ extra_admin_user }}"
+      password: "{{ extra_admin_password }}"
+      server: "{{ item.management }}"
+      server_port: "{{ extra_port_mgt }}"
+      validate_certs: no
+  loop: "{{ stats_self_ips }}"
+
+- name: SET var_failoverGroup_master_dataplane
+  set_fact:
+    var_failoverGroup_master_dataplane: "{{ stats_self_ips.0.dataplane }}"
+  loop: "{{ stats_self_ips }}"
+  when: item.protect_from_scale_in == "True"
+
+- name: INIT var_failoverGroup_members
+  set_fact:
+    var_failoverGroup_members: []
+
+- name: SET var_failoverGroup_members
+  set_fact:
+    var_failoverGroup_members: "{{ var_failoverGroup_members + [ item.dataplane ] }}"
+  loop: "{{ stats_self_ips }}"
+
+- name: var_failoverGroup_members
+  debug:
+    msg: "var_failoverGroup_members: {{ var_failoverGroup_members }}"
+
+- name: do-vmss-master-2nic-awaf-BIGIQ.json
+  debug:
+    msg: "{{ lookup('template', 'do-vmss-master-2nic-awaf-BIGIQ.json') }}"
+  loop: "{{ stats_self_ips }}"
+  when: item.protect_from_scale_in == "True"
+
+- name: onboarding Master only when slaves exists
+  uri:
+    url: https://{{ item.management }}/mgmt/shared/declarative-onboarding
+    method: "POST"
+    user: "admin"
+    password: "{{ extra_admin_password }}"
+    validate_certs: no
+    body: "{{ lookup('template', 'do-vmss-master-2nic-awaf-BIGIQ.json') }}"
+    body_format: json
+    timeout: 300
+    status_code: 200, 202
+  register: list_json_response
+  loop: "{{ stats_self_ips }}"
+  when:
+    - item.protect_from_scale_in == "True"
+    - ansible_loop.length > 1
+  loop_control:
+    extended: yes
+
+- name: onboarding Master only when slaves absent
+  uri:
+    url: https://{{ item.management }}/mgmt/shared/declarative-onboarding
+    method: "POST"
+    user: "admin"
+    password: "{{ extra_admin_password }}"
+    validate_certs: no
+    body: "{{ lookup('template', 'do-vmss-master_alone-2nic-awaf-BIGIQ.json') }}"
+    body_format: json
+    timeout: 300
+    status_code: 200, 202
+  register: list_json_response
+  loop: "{{ stats_self_ips }}"
+  when:
+    - item.protect_from_scale_in == "True"
+    - ansible_loop.length == 1
+  loop_control:
+    extended: yes
+
+- debug:
+    var: list_json_response
+
+- name: onboarding Slave
+  uri:
+    url: https://{{ item.management }}/mgmt/shared/declarative-onboarding
+    method: "POST"
+    user: "admin"
+    password: "{{ extra_admin_password }}"
+    validate_certs: no
+    body: "{{ lookup('template', 'do-vmss-slave-2nic-awaf-BIGIQ.json') }}"
+    body_format: json
+    timeout: 300
+    status_code: 200, 202
+  loop: "{{ stats_self_ips }}"
+  when: item.protect_from_scale_in != "True"
+
+- name: CMP_OUTPUT
+  debug:
+    msg: "
+    key=do_log_file;value=/var/log/restnoded/restnoded.log;help=restnoded failure log;
+    "
+
+- name: WAIT for onboarding IN PROGRESS
+  uri:
+    url: https://{{ item.item.management }}/mgmt/shared/declarative-onboarding/task/{{ item.json.id }}?statusCodes=experimental
+    method: GET
+    user: "admin"
+    password: "{{ extra_admin_password }}"
+    validate_certs: no
+    timeout: 60
+    status_code: 200
+  loop: "{{ list_json_response.results }}"
+  register: list_json_response_task_progress
+  when: item.skip_reason is undefined
+
+- debug:
+    var: list_json_response_task_progress
+
+- pause:
+    prompt: "Please wait during BIG-IP load modules"
+    minutes: 10
+
+- name: CHECK onboarding SUCCESS
+  uri:
+    url: https://{{ item.item.management }}/mgmt/shared/declarative-onboarding/task/{{ item.json.id }}?statusCodes=experimental
+    method: GET
+    user: "admin"
+    password: "{{ extra_admin_password }}"
+    validate_certs: no
+    timeout: 60
+    status_code: 200
+  register: list_json_response_task_success
+  loop: "{{ list_json_response.results }}"
+  when: item.skip_reason is undefined
+
+- debug:
+    var: list_json_response_task_success.results
+
+...

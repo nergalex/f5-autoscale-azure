@@ -425,24 +425,27 @@ Extra variable                                  Description                     
 
 Deploy an Application
 ==================================================
-Create and launch a workflow template ``wf-create-app_inbound_awaf_device-group`` that includes those Job templates in this order:
+Create and launch a workflow template ``wf-create-app_inbound_nginx_controller`` that includes those Job templates in this order:
 
-=====================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
-Job template                                            objective                                           playbook                                        activity                                        inventory                                       limit                                           credential
-=====================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
-``poc-azure_create_vmss_app``                           Create a VMSS for App hosting                       ``playbooks/poc-azure.yaml``                    ``create-vmss-app``                             ``my_project``                                  ``localhost``                                   ``my_azure_credential``
-``poc-azure_get-vmss_hub-facts``                        Get info of BIG-IP VMSS                             ``playbooks/poc-azure.yaml``                    ``get-vmss_hub-facts``                          ``my_project``                                  ``localhost``                                   ``my_azure_credential``
-``poc-f5-create_as3_app_inbound_awaf_device-group``     Deploy App Service (AS3) on BIG-IP                  ``playbooks/poc-f5.yaml``                       ``as3_vmss_device-group_bigiq_create``          ``my_project``                                  ``localhost``                                   ``my_azure_credential``
-``poc-azure_get-vmss_nginx_first_line-facts``           Get info of NGINX North VMSS                        ``playbooks/poc-azure.yaml``                    ``get-vmss_nginx_first_line-facts``             ``my_project``                                  ``localhost``                                   ``my_azure_credential``
-``poc-nginx_create_app_app_protect``                    Deploy App Service on NGINX North                   ``playbooks/poc-nginx_master.yaml``             ``create_app_app_protect``                      ``localhost``                                   ``localhost``                                   ``cred_NGINX``
-``poc-azure_get-vmss_nginx_second_line-facts``          Get info of NGINX South VMSS                        ``playbooks/poc-azure.yaml``                    ``get-vmss_nginx_second_line-facts``            ``localhost``                                   ``localhost``                                   ``cred_NGINX``
-``poc-nginx_create_app_adc``                            Deploy App Service on NGINX South                   ``playbooks/poc-nginx_master.yaml``             ``create_app_adc``                              ``my_project``                                  ``localhost``                                   ``my_vmss_credential``
-=====================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+=============================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+Job template                                                    objective                                           playbook                                        activity                                        inventory                                       limit                                           credential
+=============================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+``poc-azure_create_vmss_app``                                   Create a VMSS for App hosting                       ``playbooks/poc-azure.yaml``                    ``create-vmss-app``                             ``my_project``                                  ``localhost``                                   ``my_azure_credential``
+``poc-nginx_controller-login``                                  GET authentication token                            ``playbooks/poc-nginx_controller.yaml``         ``login``                                       ``localhost``                                   ``localhost``
+``poc-nginx_controller-create_environment``                     Create an environment                               ``playbooks/poc-nginx_controller.yaml``         ``create_environment``                          ``localhost``                                   ``localhost``
+``poc-azure_get-vmss_nginx_first_line-facts``                   Get info of NGINX North VMSS                        ``playbooks/poc-azure.yaml``                    ``get-vmss_nginx_first_line-facts``             ``my_project``                                  ``localhost``                                   ``my_azure_credential``
+``poc-nginx_controller-create_gw_app_component_vmss_north``     Create App on North GW / WAF                        ``playbooks/poc-nginx_controller.yaml``         ``create_gw_app_component_vmss_north``                          ``localhost``                                   ``localhost``
+``poc-azure_get-vmss_nginx_second_line-facts``                  Get info of NGINX South VMSS                        ``playbooks/poc-azure.yaml``                    ``get-vmss_nginx_second_line-facts``            ``localhost``                                   ``localhost``                                   ``cred_NGINX``
+``poc-nginx_controller-create_gw_app_component_vmss_south``     Create App on North GW / WAF                        ``playbooks/poc-nginx_controller.yaml``         ``create_gw_app_component_vmss_south``                          ``localhost``                                   ``localhost``
+``poc-azure_get-vmss_hub-facts``                                Get info of BIG-IP VMSS                             ``playbooks/poc-azure.yaml``                    ``get-vmss_hub-facts``                          ``my_project``                                  ``localhost``                                   ``my_azure_credential``
+``poc-f5-create_as3_app_inbound_awaf_device-group``             Deploy App Service (AS3) on BIG-IP                  ``playbooks/poc-f5.yaml``                       ``as3_vmss_device-group_bigiq_create``          ``my_project``                                  ``localhost``                                   ``my_azure_credential``
+=============================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+
 
 ==============================================  =============================================   ================================================================================================================================================================================================================
 Extra variable                                  Description                                     Example
 ==============================================  =============================================   ================================================================================================================================================================================================================
-``extra_app``                                   Config specification                            ``{'backend_servers':['10.12.1.4'], 'name':'app1', 'vip_subnet_awaf':['10.100.10.2'], 'vip_subnet_nginx':['10.100.11.2']}, 'vs_listener_port_http':'80', 'vs_listener_port_https':'443'``
+``extra_app``                                   Config specification                            see below
 ``extra_app_backend``                           VM extension for VMSS App                       ``juice-shop_1nic_bootstrapping.jinja2``
 ``extra_app_crt``                               App private key                                 ``-----BEGIN  PRIVATE KEY-----XXXXXXX-----END PRIVATE KEY-----``
 ``extra_app_key``                               App certificate                                 ``-----BEGIN  CERTIFICATE-----XXXXXXX-----END CERTIFICATE-----``
@@ -474,6 +477,37 @@ Extra variable                                  Description                     
 ``extra_waf_policy``                            WAF template policy                             ``https://raw.githubusercontent.com/nergalex/.../asm_policy.xml``
 ``extra_zone_name``                             subnet to attach App VMSS                       ``app``
 ==============================================  =============================================   ================================================================================================================================================================================================================
+
+``extra_app`` structure, also stored as is in Consul:
+
+.. code:: yaml
+    extra_app:
+      backend_servers:
+        - 10.12.1.5
+      components:
+        - name: north
+          type: adc
+          uri: /
+          workloads:
+            - 'http://192.168.0.4'
+        - name: south
+          type: adc
+          uri: /
+          workloads:
+            - 'http://10.12.1.5:81'
+      domain: f5app.dev
+      environment: PROD
+      name: webmap
+      tls:
+        crt: "-----BEGIN CERTIFICATE-----\r\n...\r\n...\r\n-----END CERTIFICATE-----"
+        key: "-----BEGIN RSA PRIVATE KEY-----\r\n...-----END RSA PRIVATE KEY-----"
+      vip_subnet_awaf:
+        - 192.168.0.4
+      vip_subnet_nginx:
+        - 10.100.11.4
+      vs_listener_port_http: '80'
+      vs_listener_port_https: '443'
+
 
 Autoscale
 =====================
