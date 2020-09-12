@@ -184,7 +184,7 @@ Consul by Hashicorp
 ###################
 Refer to this `article <https://github.com/nergalex/f5-sslo-category#consul>`_ to install Consul.
 
-Deploy a Edge Security replica
+Deploy an replica of Edge Security
 ==================================================
 1. Azure - network components
 ###############
@@ -413,6 +413,7 @@ Extra variable                                  Description                     
 ``extra_webhook_key_pem``                                                                       ``-----BEGIN RSA PRIVATE KEY...``
 ``faas_app_name``                                                                               ``f5autoscale``
 ``faas_app_repo``                                                                               ``https://github.com/nergalex/webhook_public.git``
+==============================================  =============================================   ================================================================================================================================================================================================================
 
 Deploy an Application
 ==================================================
