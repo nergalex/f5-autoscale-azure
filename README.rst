@@ -436,17 +436,16 @@ Job template                                                    objective       
 ``poc-azure_get-vmss_nginx_first_line-facts``                   Get info of NGINX North VMSS                        ``playbooks/poc-azure.yaml``                    ``get-vmss_nginx_first_line-facts``             ``my_project``                                  ``localhost``                                   ``my_azure_credential``
 ``poc-nginx_controller-create_gw_app_component_vmss_north``     Create App on North GW / WAF                        ``playbooks/poc-nginx_controller.yaml``         ``create_gw_app_component_vmss_north``                          ``localhost``                                   ``localhost``
 ``poc-azure_get-vmss_nginx_second_line-facts``                  Get info of NGINX South VMSS                        ``playbooks/poc-azure.yaml``                    ``get-vmss_nginx_second_line-facts``            ``localhost``                                   ``localhost``                                   ``cred_NGINX``
-``poc-nginx_controller-create_gw_app_component_vmss_south``     Create App on North GW / WAF                        ``playbooks/poc-nginx_controller.yaml``         ``create_gw_app_component_vmss_south``                          ``localhost``                                   ``localhost``
+``poc-nginx_controller-create_gw_app_component_vmss_south``     Create App on South API GW                          ``playbooks/poc-nginx_controller.yaml``         ``create_gw_app_component_vmss_south``                          ``localhost``                                   ``localhost``
 ``poc-azure_get-vmss_hub-facts``                                Get info of BIG-IP VMSS                             ``playbooks/poc-azure.yaml``                    ``get-vmss_hub-facts``                          ``my_project``                                  ``localhost``                                   ``my_azure_credential``
 ``poc-f5-create_as3_app_inbound_awaf_device-group``             Deploy App Service (AS3) on BIG-IP                  ``playbooks/poc-f5.yaml``                       ``as3_vmss_device-group_bigiq_create``          ``my_project``                                  ``localhost``                                   ``my_azure_credential``
 =============================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
-
 
 ==============================================  =============================================   ================================================================================================================================================================================================================
 Extra variable                                  Description                                     Example
 ==============================================  =============================================   ================================================================================================================================================================================================================
 ``extra_app``                                   Config specification                            see below
-``extra_app_backend``                           VM extension for VMSS App                       ``juice-shop_1nic_bootstrapping.jinja2``
+``extra_app_backend``                           VM extension for VMSS App                       ``arcadia_1nic_bootstrapping.jinja2``
 ``extra_app_crt``                               App private key                                 ``-----BEGIN  PRIVATE KEY-----XXXXXXX-----END PRIVATE KEY-----``
 ``extra_app_key``                               App certificate                                 ``-----BEGIN  CERTIFICATE-----XXXXXXX-----END CERTIFICATE-----``
 ``extra_app_name``                              HOST in FQDN                                    ``App1``
@@ -459,11 +458,17 @@ Extra variable                                  Description                     
 ``extra_bigiq_admin_user``                      BIG-IQ user for AS3 deployment                  ``admin``
 ``extra_bigiq_ip_mgt``                          BIG-IQ ip mgt for AS3 deployment                ``10.0.0.27``
 ``extra_bigiq_port_mgt``                        BIG-IQ mgt port for AS3 deployment              ``443``
+``extra_consul_agent_ip``                       Consul server IP                                ``10.100.0.60``
+``extra_consul_agent_port``                     Consul server port                              ``8500``
+``extra_consul_agent_scheme``                   Consul server scheme                            ``http``
 ``extra_hub_platform_name``                     BIG-IQ mgt port for AS3 deployment              ``myPlatform``
 ``extra_hub_vmss_name``                         BIG-IP VMSS name                                ``awaf``
 ``extra_key_data``                              admin CRT                                       ``-----BEGIN  CERTIFICATE-----XXXXXXX-----END CERTIFICATE-----``
 ``extra_location``                                                                              ``eastus2``
 ``extra_log_profile``                                                                           ``/Common/Shared/asm_log_bigiq``
+``extra_nginx_controller_ip``                                                                   ``10.0.0.38``
+``extra_nginx_controller_password``                                                             ``Cha4ngMe!``
+``extra_nginx_controller_username``                                                             ``admin@acme.com``
 ``extra_passphrase_b64``                        App private key passphrase in b64               ``Q01QLXBhc3NwaHJhc2U=``
 ``extra_platform_tags``                                                                         ``environment=DMO project=CloudBuilderf5``
 ``extra_pool``                                  pool specification for BIG-IP AS3               ``[{'name': 'default', 'loadBalancingMode': 'least-connections-member', 'servicePort': '80', 'serverAddresses':['10.100.11.2']}]``
