@@ -28,7 +28,7 @@ The Edge Security architecture described in this article is a solution based on 
 There is no unique solution, please follow the methodology presented in the Secure Cloud Architecture webinar, available in
 `English <https://gateway.on24.com/wcc/eh/1140560/lp/2200026/f5-emea-webinar-march-2020-english>`_,
 `French <https://gateway.on24.com/wcc/eh/1140560/lp/2209631/f5-emea-webinar-march-2020-french>`_
-or other `languages  <https://www.f5.com/c/emea-2020/emea-webinar-library>`_.
+and other `languages  <https://www.f5.com/c/emea-2020/emea-webinar-library>`_.
 Feel free to reach `F5 people <https://www.linkedin.com/company/f5/people/>`_ for a dedicated workshop.
 
 .. figure:: _figure/Architecture_INBOUND.png
