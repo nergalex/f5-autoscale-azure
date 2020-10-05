@@ -19,6 +19,7 @@
   service:
     name: unit
     state: started
+    enabled: yes
 
 - name: CREATE webhook apps directoty
   file:
