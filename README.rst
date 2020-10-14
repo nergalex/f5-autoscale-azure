@@ -447,7 +447,7 @@ Job template                                                    objective       
 Extra variable                                  Description                                     Example
 ==============================================  =============================================   ================================================================================================================================================================================================================
 ``extra_app``                                   App specification                               see below
-``extra_app_backend``                           VM extension for VMSS App                       ``arcadia_1nic_bootstrapping.jinja2``
+``extra_app_backend``                           VM extension for VMSS App                       ``arcadia_consul_1nic_bootstrapping.jinja2``
 ``extra_app_crt``                               App private key                                 ``-----BEGIN  PRIVATE KEY-----XXXXXXX-----END PRIVATE KEY-----``
 ``extra_app_key``                               App certificate                                 ``-----BEGIN  CERTIFICATE-----XXXXXXX-----END CERTIFICATE-----``
 ``extra_app_name``                              HOST in FQDN                                    ``App1``
@@ -463,6 +463,8 @@ Extra variable                                  Description                     
 ``extra_consul_agent_ip``                       Consul server IP                                ``10.100.0.60``
 ``extra_consul_agent_port``                     Consul server port                              ``8500``
 ``extra_consul_agent_scheme``                   Consul server scheme                            ``http``
+``extra_consul_datacenter``                     Consul datacenter scheme                        ``myPlatform``
+``extra_consul_version``                        Consul version                                  ``1.8.4``
 ``extra_hub_platform_name``                     BIG-IQ mgt port for AS3 deployment              ``myPlatform``
 ``extra_hub_vmss_name``                         BIG-IP VMSS name                                ``awaf``
 ``extra_key_data``                              admin CRT                                       ``-----BEGIN  CERTIFICATE-----XXXXXXX-----END CERTIFICATE-----``
@@ -496,13 +498,14 @@ Extra variable                                  Description                     
         - name: north
           type: adc
           uri: /
+          template: component_adc.json
           workloads:
             - 'http://192.168.0.4'
         - name: south
           type: adc
           uri: /
-          workloads:
-            - 'http://10.12.1.5:81'
+          template: component_adc_consul.json
+          service_disovery: arcadia-all-in-one
       domain: f5app.dev
       environment: PROD
       name: webmap
